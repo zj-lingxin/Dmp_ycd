@@ -9,7 +9,8 @@ class DataPrepareService extends DataSource{
   def run(): Unit = {
     try {
       logInfo(Utils.wrapLog("开始运行 DataPrepareService run方法"))
-      FileUtils.saveAsTextFile(DataPrepareDao.fullFieldsOrder(), Constants.OutputPath.FULL_FIELDS_ORDER)
+
+      FileUtils.saveAsTextFile(DataPrepareDao.fullFieldsOrder(), Constants.InputPath.FULL_FIELDS_ORDER)
     } catch {
       case t: Throwable =>
         MailAgent(t, Constants.Mail.DATA_PREPARE_SUBJECT).sendMessage()

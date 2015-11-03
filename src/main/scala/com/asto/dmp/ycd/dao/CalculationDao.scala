@@ -1,17 +1,18 @@
 package com.asto.dmp.ycd.dao
 
-import com.asto.dmp.ycd.base.SQL
+import com.asto.dmp.ycd.base._
 import com.asto.dmp.ycd.util.{DateUtils, BizUtils}
 
 /**
  * 指标计算
  */
-object CalculationDao {
+object CalculationDao  {
   /**
    * 经营期限（月）= 申请贷款月份(系统运行时间) - 最早一笔网上订单的月份
    */
   def monthsNumsFromEarliestOrder() = {
-    BizDao.getOrderDetailsProps(SQL().select("license_no,order_date"))
+    //Contexts.getSparkContext.textFile(Constants.OutputPath.FULL_FIELDS_ORDER).map(_.split(Constants.)).foreach(println)
+    BizDao.getFullFieldsOrderProps(SQL().select("license_no,order_date"))
       .map(a => (a(0).toString, a(1).toString))
       .groupByKey()
       .map(t => (t._1, BizUtils.monthsNumsFrom(t._2.min, "yyyy-MM-dd")))

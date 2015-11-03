@@ -1,5 +1,6 @@
 package com.asto.dmp.ycd.base
 
+import com.asto.dmp.ycd.dao.CalculationDao
 import com.asto.dmp.ycd.service._
 import com.asto.dmp.ycd.util.Utils
 import org.apache.spark.Logging
@@ -15,8 +16,8 @@ object Main extends Logging {
       case "1" =>
         new DataPrepareService().run()
       case "2" =>
-        //准入模型
-        new AccessService().run()
+
+        CalculationDao.monthsNumsFromEarliestOrder().foreach(println)
       case "3" =>
         //授信模型
         new CreditService().run()
@@ -26,10 +27,8 @@ object Main extends Logging {
       case "5" =>
         //所有模型一起运行
         logInfo(Utils.wrapLog("所有模型一起运行"))
-        new AntiFraudService().run()
-        new AccessService().run()
-        new CreditService().run()
-        new LoanWarningService().run()
+        new DataPrepareService().run()
+        CalculationDao.monthsNumsFromEarliestOrder().foreach(println)
       case _ =>
         logError(s"传入参数错误!传入的是${args(0)},请传入1~5")
     }

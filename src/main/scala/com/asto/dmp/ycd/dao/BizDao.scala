@@ -10,6 +10,6 @@ object BizDao extends Dao {
 
   def getTobaccoPriceProps(sql: SQL = new SQL()) = getProps(Constants.InputPath.TOBACCO_PRICE, Constants.Schema.TOBACCO_PRICE, "tobacco_prices", sql)
 
-  def getFullFieldsOrderProps(sql: SQL = new SQL()) = getProps(Constants.OutputPath.FULL_FIELDS_ORDER, Constants.Schema.FULL_FIELDS_ORDER, "full_fields_order", sql, Constants.OutputPath.SEPARATOR)
+  def getFullFieldsOrderProps(sql: SQL = new SQL()) = getProps(Constants.InputPath.FULL_FIELDS_ORDER, Constants.Schema.FULL_FIELDS_ORDER, "full_fields_order", sql)
 
 }

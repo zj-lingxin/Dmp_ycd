@@ -18,6 +18,8 @@ object Constants {
     val YEAR_MONTH_DAY_FORMAT = "yyyy-MM-dd"
 
     val YEAR_MONTH_FORMAT = "yyyy-MM"
+
+    val TODAY = DateUtils.getStrDate("yyyyMM/dd")
   }
 
   /** 输入文件路径 **/
@@ -28,27 +30,27 @@ object Constants {
     val ORDER_INFO = s"$DIR/tobacco_order_info/*"
     val ORDER_DETAILS = s"$DIR/tobacco_order_details/*"
     val TOBACCO_PRICE = s"$DIR/tobacco_price/*"
+    //整合了ORDER_DETAILS和TOBACCO_PRICE的信息
+    val FULL_FIELDS_ORDER = s"$DIR/full_fields_order"
+    //val FULL_FIELDS_ORDER_INPUT = s"$DIR/full_fields_order/*"
   }
 
   /** 输出文件路径 **/
   object OutputPath {
     val SEPARATOR = "\t"
-    private val TODAY = DateUtils.getStrDate("yyyyMM/dd")
+
     private val DIR = s"${App.HADOOP_DIR}/output"
 
-    //整合了ORDER_DETAILS和TOBACCO_PRICE的信息
-    val FULL_FIELDS_ORDER = s"$DIR/text/$TODAY/full_fields_order"
-
     //反欺诈结果路径
-    val ANTI_FRAUD_TEXT = s"$DIR/text/$TODAY/fraud"
+    val ANTI_FRAUD_TEXT = s"$DIR/text/${App.TODAY}/fraud"
     //得分结果路径
-    val SCORE_TEXT = s"$DIR/text/$TODAY/score"
+    val SCORE_TEXT = s"$DIR/text/${App.TODAY}/score"
     //授信结果路径
-    val CREDIT_TEXT = s"$DIR/text/$TODAY/credit"
+    val CREDIT_TEXT = s"$DIR/text/${App.TODAY}/credit"
     //准入结果路径
-    val ACCESS_TEXT = s"$DIR/text/$TODAY/access"
+    val ACCESS_TEXT = s"$DIR/text/${App.TODAY}/access"
     //贷后预警结果路径
-    val LOAN_WARNING_TEXT = s"$DIR/text/$TODAY/warning"
+    val LOAN_WARNING_TEXT = s"$DIR/text/${App.TODAY}/warning"
   }
 
   /** 表的模式 **/
@@ -62,7 +64,7 @@ object Constants {
     val TOBACCO_PRICE = "cigarette_name,cigarette_brand,retail_price,manufacturers"
 
     //烟草订单详情：城市,许可证号,订单号,订货日期,卷烟名称,批发价,要货量,订货量,金额,生产厂家(与TOBACCO_PRICE中的冗余)
-    val FULL_FIELDS_ORDER = "city,license_no,order_id,order_date,cigarette_name,wholesale_price,need_goods_amount,order_amount,pay_money,manufacturers,cigarette_brand,retail_price,manufacturers"
+    val FULL_FIELDS_ORDER = "city,license_no,order_id,order_date,cigarette_name,wholesale_price,need_goods_amount,order_amount,pay_money,cigarette_brand,retail_price,manufacturers"
   }
 
   /** 邮件发送功能相关常量 **/
