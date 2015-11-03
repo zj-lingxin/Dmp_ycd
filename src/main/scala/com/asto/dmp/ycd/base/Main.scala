@@ -1,6 +1,5 @@
 package com.asto.dmp.ycd.base
 
-import com.asto.dmp.ycd.dao.CalculationDao
 import com.asto.dmp.ycd.service._
 import com.asto.dmp.ycd.util.Utils
 import org.apache.spark.Logging
@@ -14,9 +13,7 @@ object Main extends Logging {
     }
     args(0) match {
       case "1" =>
-        CalculationDao.orderAmountAnnualAverage().foreach(println)
-        CalculationDao.payMoneyAnnualAverage().foreach(println)
-        CalculationDao.perCigaretteAveragePriceOfAnnualAverage.foreach(println)
+        new DataPrepareService().run()
       case "2" =>
         //准入模型
         new AccessService().run()

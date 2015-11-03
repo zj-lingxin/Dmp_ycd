@@ -21,21 +21,21 @@ object CalculationDao {
    * 订货额年均值 = 近12个月（不含贷款当前月）“金额”字段，金额之和/12
    * 返回的元素,如：(33010120120716288A,68260)
    */
-  def payMoneyAnnualAverage() = annualAverage("license_no,pay_money")
+  def payMoneyAnnualAverage() = lastMonthsAverage("license_no,pay_money", 12)
 
   /**
    * 订货条数年均值 = 近12个月（不含贷款当前月）“订货量”字段，订货量之和/12、
    * 返回的元素,如：(33010120120716288A,427)
    */
-  def orderAmountAnnualAverage() = annualAverage("license_no,order_amount")
+  def orderAmountAnnualAverage() = lastMonthsAverage("license_no,order_amount", 12)
 
   /**
    * 计算年均值。订货额年均值和订货条数年均值的计算过程基本相同，除了第二个字段不同，所以提取出计算逻辑。
    * @param fields
    * @return
    */
-  private def annualAverage(fields: String) = {
-    annualSum(fields).map(t => (t._1, t._2 / 12))
+  private def lastMonthsAverage(fields: String, backMonthsNum: Int) = {
+    lastMonthsSum(fields, backMonthsNum).map(t => (t._1, t._2 / backMonthsNum))
   }
 
   /**
@@ -45,10 +45,10 @@ object CalculationDao {
    * @param fields
    * @return
    */
-  private def annualSum(fields: String) = {
+  private def lastMonthsSum(fields: String, backMonthsNum: Int) = {
     BizDao.getOrderDetailsProps(
       SQL().select(fields).
-        where(s" order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}' and order_date <= '${DateUtils.monthsAgoWithMaxDay(1, "yyyy-MM-dd")}'")
+        where(s" order_date >= '${DateUtils.monthsAgo(backMonthsNum, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'")
     )
     .map(a => (a(0).toString, a(1).toString.toDouble))
     .groupByKey()
@@ -59,8 +59,8 @@ object CalculationDao {
    * 每条均价年均值 = 近12月总提货额 / 近12月总进货条数
    */
   def perCigaretteAveragePriceOfAnnualAverage = {
-    annualSum("license_no,pay_money")
-    .leftOuterJoin(annualAverage("license_no,order_amount")) //(33010120120716288A,(819131,Some(427)))
+    lastMonthsSum("license_no,pay_money", 12)
+    .leftOuterJoin(lastMonthsAverage("license_no,order_amount", 12)) //(33010120120716288A,(819131,Some(427)))
     .filter(t => t._2._2.isDefined && t._2._2.get.toDouble > 0)
     .map(t => (t._1, t._2._1 / t._2._2.get))
   }
@@ -87,13 +87,12 @@ object CalculationDao {
   }
 
   /**
-   * 月销售增长比
+   * 月销售增长比 = 近3月月平均销售 / 近6月月平均销售 (不足六个月怎么算？)
    * 返回的数据保留两位小数
    */
-  def monthlySalesGrowthRatio: Double = {
-    BizDao.getOrderDetailsProps(SQL().select("license_no,order_date"))
-      .map(a => (a(0).toString, a(1).toString))
-      .groupByKey()
-      .map(t => (t._1, BizUtils.monthsNumsFrom(t._2.min, "yyyy-MM-dd")))
+  def monthlySalesGrowthRatio = {
+    lastMonthsAverage("license_no,pay_money", 3)
+    .leftOuterJoin(lastMonthsAverage("license_no,pay_money", 6)) //(33010102981025009A,(130263,Some(125425)))
+    .map(t => (t._1, f"${(t._2._1.toDouble / t._2._2.get)}%1.2f"))
   }
 }

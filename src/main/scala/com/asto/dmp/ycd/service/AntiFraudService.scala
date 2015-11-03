@@ -13,7 +13,7 @@ class AntiFraudService extends DataSource with Serializable {
   def run(): Unit = {
     try {
       logInfo(Utils.wrapLog("开始运行反欺诈模型"))
-      BizDao.getOrderInfoProps(SQL().select("*").limit(10)).collect.map(a => (a(0),a(5))).foreach(println)
+      //BizDao.getOrderInfoProps(SQL().select("*").limit(10)).collect.map(a => (a(0),a(5))).foreach(println)
       BizDao.getOrderDetailsProps(SQL().select("*").limit(10)).collect.map(a => (a(0),a(5))).foreach(println)
     } catch {
       case t: Throwable =>
