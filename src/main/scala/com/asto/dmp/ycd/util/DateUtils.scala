@@ -40,6 +40,17 @@ object DateUtils extends scala.Serializable{
     timeAgo(m, Calendar.MONTH, formatText)
 
   /**
+   * 倒推出m月之前的月份以及该月的最大日期，并以formatText格式以字符串形式输出
+   */
+  def monthsAgoWithMaxDay(m: Int = 0, formatText: String = "yyyy-MM-dd"): String = {
+    val cal = Calendar.getInstance()
+    cal.add(Calendar.MONTH, -m+1)
+    cal.set(Calendar.DATE,1)
+    cal.add(Calendar.DATE, -1)
+    getStrDate(cal, formatText)
+  }
+
+  /**
    * 倒推出m年之前的日期，并以formatText格式以字符串形式输出
    */
   def yearAgo(m: Int = 0, formatText: String = "yyyy-MM-dd"): String =

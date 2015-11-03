@@ -11,13 +11,13 @@ object Constants {
     //项目的中文名称
     val CHINESE_NAME = "烟草贷"
     //项目数据存放的Hadoop的目录
-    val HADOOP_DIR = "hdfs://appcluster/scd/"
+    val HADOOP_DIR = "hdfs://appcluster/ycd/"
 
     val LOG_WRAPPER = "######################"
 
-    val YEAR_MONTH_DAY_FORMAT = "yyyy/M/d"
+    val YEAR_MONTH_DAY_FORMAT = "yyyy-MM-dd"
 
-    val YEAR_MONTH_FORMAT = "yyyy/M"
+    val YEAR_MONTH_FORMAT = "yyyy-MM"
   }
 
   /** 输入文件路径 **/
@@ -25,7 +25,8 @@ object Constants {
     //hdfs中表的字段的分隔符
     val SEPARATOR = "\t"
     private val DIR = s"${App.HADOOP_DIR}/input"
-    //val ORDER = s"$DIR/order/*"
+    val ORDER_INFO = s"$DIR/tobacco_order_info/*"
+    val ORDER_DETAILS = s"$DIR/tobacco_order_details/*"
   }
 
   /** 输出文件路径 **/
@@ -36,7 +37,8 @@ object Constants {
 
     //反欺诈结果路径
     val ANTI_FRAUD_TEXT = s"$DIR/text/$TODAY/fraud"
-
+    //得分结果路径
+    val SCORE_TEXT = s"$DIR/text/$TODAY/score"
     //授信结果路径
     val CREDIT_TEXT = s"$DIR/text/$TODAY/credit"
     //准入结果路径
@@ -47,8 +49,11 @@ object Constants {
 
   /** 表的模式 **/
   object Schema {
-    /*  //订单表：订单ID, 餐厅ID, 餐厅Id, 餐厅名称, 下单客户ID, 客户名称, 城市ID, 订单额, 退款状态, 下单时间, 手机号, 下单配送地址, 下单经纬度d
-    val ORDER = "order_date, order_id, shop_id, shop_name, custom_id, custom_name, city_id, order_money, refund_status, place_order_time, custom_mobile, delivery_address, lng_lat"*/
+    //烟草订单信息：客户名称,许可证号,结算方式,订单号,状态,订货日期,品种数,总要货,总销售,总金额,支付方式,城市,城市Id
+    val ORDER_INFO = "customer_name,license_no,billing_methods,order_id,status,order_date,number_of_species,total_need_goods_amount,total_sales,total_pay_money,pay_by,city,city_id"
+    //烟草订单详情：城市,许可证号,订单号,订货日期,卷烟名称,批发价,要货量,订货量,金额,产家名称
+    val ORDER_DETAILS = "city,license_no,order_id,order_date,cigarette_name,wholesale_price,need_goods_amount,order_amount,pay_money,factory_name"
+    val TOBACCO_PRICES = ""
   }
 
   /** 邮件发送功能相关常量 **/

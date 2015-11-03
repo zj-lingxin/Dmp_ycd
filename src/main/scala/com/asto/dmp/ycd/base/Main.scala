@@ -1,5 +1,6 @@
 package com.asto.dmp.ycd.base
 
+import com.asto.dmp.ycd.dao.CalculationDao
 import com.asto.dmp.ycd.service._
 import com.asto.dmp.ycd.util.Utils
 import org.apache.spark.Logging
@@ -13,8 +14,9 @@ object Main extends Logging {
     }
     args(0) match {
       case "1" =>
-        //反欺诈模型
-        new AntiFraudService().run()
+        CalculationDao.orderAmountAnnualAverage().foreach(println)
+        CalculationDao.payMoneyAnnualAverage().foreach(println)
+        CalculationDao.perCigaretteAveragePriceOfAnnualAverage.foreach(println)
       case "2" =>
         //准入模型
         new AccessService().run()
@@ -37,7 +39,7 @@ object Main extends Logging {
 
     Contexts.stopSparkContext()
     val endTime = System.currentTimeMillis()
-    logInfo(s"程序共运行${(startTime - endTime) / 1000}秒")
+    logInfo(s"程序共运行${(endTime - startTime) / 1000}秒")
 
   }
 }
