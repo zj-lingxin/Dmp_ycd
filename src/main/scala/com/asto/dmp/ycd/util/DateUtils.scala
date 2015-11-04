@@ -12,6 +12,7 @@ object DateUtils extends scala.Serializable{
    */
   def getStrDate(formatText: String): String = getStrDate(Calendar.getInstance(), formatText)
 
+
   /**
    * 获取当前系统日期。
    * 参数calendar可以调节日期，如调到12个月之前，并且使用formatText格式输出
@@ -20,6 +21,8 @@ object DateUtils extends scala.Serializable{
    */
   def getStrDate(calendar: Calendar, formatText: String = "yyyy-MM-dd") =
     new java.text.SimpleDateFormat(formatText).format(calendar.getTime)
+
+  def calendarToStr(calendar: Calendar, formatText: String = "yyyy-MM-dd") = getStrDate(calendar, formatText)
 
   /**
    * 获取当前系统日期。

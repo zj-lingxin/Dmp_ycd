@@ -58,13 +58,13 @@ object Constants {
     //烟草订单信息：客户名称,许可证号,结算方式,订单号,状态,订货日期,品种数,总要货,总销售,进货额(成本),支付方式,城市,城市Id
     //val ORDER_INFO = "customer_name,license_no,billing_methods,order_id,status,order_date,number_of_species,total_need_goods_amount,total_sales,total_pay_money,pay_by,city,city_id"*/
 
-    //烟草订单详情：城市,许可证号,订单号,订货日期,卷烟名称,批发价,要货量,订货量,金额,生产厂家(与TOBACCO_PRICE中的冗余)
-    val ORDER_DETAILS = "city,license_no,order_id,order_date,cigarette_name,wholesale_price,need_goods_amount,order_amount,pay_money,manufacturers"
+    //烟草订单详情：城市,许可证号,订单号,订货日期,卷烟名称,批发价,要货量(想要多少货),订货量(厂家给的货，也就是实际拿到的货),金额,生产厂家(与TOBACCO_PRICE中的冗余)
+    val ORDER_DETAILS = "city,license_no,order_id,order_date,cigarette_name,the_cost,need_goods_amount,order_amount,pay_money,manufacturers"
     //卷烟名称,品牌系列,零售指导价(元/条),生产厂家
     val TOBACCO_PRICE = "cigarette_name,cigarette_brand,retail_price,manufacturers"
 
-    //烟草订单详情：城市,许可证号,订单号,订货日期,卷烟名称,批发价,要货量,订货量,金额,生产厂家(与TOBACCO_PRICE中的冗余)
-    val FULL_FIELDS_ORDER = "city,license_no,order_id,order_date,cigarette_name,wholesale_price,need_goods_amount,order_amount,pay_money,cigarette_brand,retail_price,manufacturers"
+    //烟草订单详情：           城市,   许可证号,   订单号,   订货日期,       卷烟名称,（单条烟的）批发价|成本价,要货量(想要多少货),订货量(厂家给的货，也就是实际拿到的货),金额（要货量 * （单条烟的）批发价）,生产厂家(与TOBACCO_PRICE中的冗余)
+    val FULL_FIELDS_ORDER = "city,license_no,order_id,order_date,cigarette_name,the_cost,need_goods_amount,order_amount,pay_money,cigarette_brand,retail_price,manufacturers"
   }
 
   /** 邮件发送功能相关常量 **/

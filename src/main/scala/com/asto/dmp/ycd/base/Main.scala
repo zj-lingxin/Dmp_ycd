@@ -17,7 +17,7 @@ object Main extends Logging {
         new DataPrepareService().run()
       case "2" =>
 
-        CalculationDao.monthsNumsFromEarliestOrder().foreach(println)
+        CalculationDao.categoryConcentration
       case "3" =>
         //授信模型
         new CreditService().run()
@@ -28,7 +28,7 @@ object Main extends Logging {
         //所有模型一起运行
         logInfo(Utils.wrapLog("所有模型一起运行"))
         new DataPrepareService().run()
-        CalculationDao.monthsNumsFromEarliestOrder().foreach(println)
+
       case _ =>
         logError(s"传入参数错误!传入的是${args(0)},请传入1~5")
     }
