@@ -7,6 +7,7 @@ import com.asto.dmp.ycd.util.{DateUtils, BizUtils}
  * 指标计算
  */
 object CalculationDao {
+  private val licenseNoArray = BizDao.getFullFieldsOrderProps(SQL().select("license_no")).map(a => a(0).toString).distinct().collect()
 
   /**
    * 经营期限（月）= 申请贷款月份(系统运行时间) - 最早一笔网上订单的月份
@@ -95,9 +96,6 @@ object CalculationDao {
       .filter(t => t._2 >= 9).count()
   }
 
-  private def licenseNoArray = {
-    BizDao.getFullFieldsOrderProps(SQL().select("license_no")).map(a => a(0).toString).distinct().collect()
-  }
 
   /**
    * 单品毛利率 = （零售指导价-成本价）/指导价*100%
@@ -105,11 +103,11 @@ object CalculationDao {
    */
   def grossMarginInSingleCategory = {
     BizDao.getFullFieldsOrderProps(SQL().select("license_no,order_date,pay_money,order_amount,retail_price,cigarette_name"))
-    .map(a => ((a(0).toString,a(1).toString.substring(0,7),a(5).toString), (a(2).toString.toDouble, a(3).toString.toInt * a(4).toString.toDouble)))
-    .groupByKey()
-    .map(t => (t._1, t._2.reduce((a,b) => (a._1 + b._1, a._2 + b._2))))
-    .filter(t => t._2._1.toInt > 0 && t._2._2.toInt > 0 )
-    .map(t => (t._1, f"${(1 - t._2._1 / t._2._2)}%1.2f"))
+      .map(a => ((a(0).toString, a(1).toString.substring(0, 7), a(5).toString), (a(2).toString.toDouble, a(3).toString.toInt * a(4).toString.toDouble)))
+      .groupByKey()
+      .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
+      .filter(t => t._2._1.toInt > 0 && t._2._2.toInt > 0)
+      .map(t => (t._1, BizUtils.retainTwoDecimal(1 - t._2._1 / t._2._2)))
   }
 
   /**
@@ -119,10 +117,10 @@ object CalculationDao {
    */
   def grossMarginInShop = {
     BizDao.getFullFieldsOrderProps(SQL().select("license_no,order_date,pay_money,order_amount,retail_price"))
-    .map(a => ((a(0).toString,a(1).toString.substring(0,7)), (a(2).toString.toDouble, a(3).toString.toInt * a(4).toString.toDouble)))
-    .groupByKey()
-    .map(t => (t._1, t._2.reduce((a,b) => (a._1 + b._1, a._2 + b._2))))
-    .map(t => (t._1, f"${(1 - t._2._1 / t._2._2)}%1.2f"))//((33010220120807247A,2015-01),0.18)
+      .map(a => ((a(0).toString, a(1).toString.substring(0, 7)), (a(2).toString.toDouble, a(3).toString.toInt * a(4).toString.toDouble)))
+      .groupByKey()
+      .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
+      .map(t => (t._1, BizUtils.retainTwoDecimal(1 - t._2._1 / t._2._2))) //((33010220120807247A,2015-01),0.18)
   }
 
   /**
@@ -132,7 +130,7 @@ object CalculationDao {
   def monthlySalesGrowthRatio = {
     lastMonthsAverage("license_no,pay_money", 3)
       .leftOuterJoin(lastMonthsActualAverage(6)) //(33010102981025009A,(130263,Some(125425)))
-      .map(t => (t._1, f"${(t._2._1.toDouble / t._2._2.get)}%1.2f"))
+      .map(t => (t._1, BizUtils.retainTwoDecimal(t._2._1.toDouble / t._2._2.get)))
   }
 
   /**
@@ -140,28 +138,57 @@ object CalculationDao {
    */
   private def lastMonthsActualAverage(monthsNums: Int) = {
     lastMonthsSum("license_no,pay_money", monthsNums)
-    .leftOuterJoin(monthsNumsFromEarliestOrder())
-    .map(t => (t._1,t._2._1,Math.min(t._2._2.getOrElse(0),monthsNums)))
-    .map(t => (t._1,{(t._2/t._3)}))
+      .leftOuterJoin(monthsNumsFromEarliestOrder())
+      .map(t => (t._1, t._2._1, Math.min(t._2._2.getOrElse(0), monthsNums)))
+      .map(t => (t._1, {
+      (t._2 / t._3)
+    }))
   }
 
   /**
    * 品类集中度：近12月销售额最高的前10名的销售额占总销售额的比重，TOP10商品对应销售额/总销售额（近12月）
    */
   def categoryConcentration = {
-    // 城市,   许可证号,    订单号,  订货日期,       卷烟名称,   批发价,             要货量,      订货量, 成本|金额,   卷烟牌子     ,零售价（零售）  生产厂家
-    //"city,license_no,order_id,order_date,cigarette_name,the_cost,need_goods_amount,order_amount,pay_money,cigarette_brand,retail_price,manufacturers"
+    Contexts.getSparkContext
+      .parallelize(getTop10CategoryForEachLicenseNo)
+      .leftOuterJoin(getLast12MonthsSales)
+      .map(t =>((t._1, BizUtils.retainTwoDecimal(t._2._1._1 / t._2._2.get), t._2._1._2)))
 
+  }
+
+  private def getTop10CategoryForEachLicenseNo = {
+    val array = getAllCategoryConcentration
+    var topIndex: Int = 0
+    val list = scala.collection.mutable.ListBuffer[(String, (Double, String))]()
+    licenseNoArray.foreach {
+      licenseNo =>
+        for (a <- array if (a._1 == licenseNo && topIndex < 10)) {
+          list += a
+          topIndex += 1
+        }
+        topIndex = 0
+    }
+    list
+  }
+
+  private def getAllCategoryConcentration = {
     selectLastMonthsData("license_no,cigarette_name,order_amount,retail_price", 12)
       .map(a => (a(0).toString, a(1).toString, a(2).toString.toInt * a(3).toString.toDouble))
       .map(t => ((t._1, t._2), t._3))
       .groupByKey()
       .map(t => (t._1, t._2.sum))
-      .map(t=> ((t._1._1, t._2), t._1._2))
-      .sortByKey(false).foreach(println)
-
-
+      .map(t => ((t._1._1, t._2), t._1._2))
+      .sortByKey(false).map(t => (t._1._1, (t._1._2, t._2))).collect() //((33010220120807247A,300.0),七匹狼(蓝))
   }
 
+  private def getLast12MonthsSales = {
+    selectLastMonthsData("license_no,order_amount,retail_price", 12)
+      .map(a => (a(0).toString, a(1).toString.toInt * a(2).toString.toDouble))
+      .map(t => (t._1, t._2))
+      .groupByKey()
+      .map(t => (t._1, t._2.sum)) //((33010220120807247A,300.0),七匹狼(蓝))
+  }
+  // 城市,   许可证号,    订单号,  订货日期,       卷烟名称,   批发价,             要货量,      订货量, 成本|金额,   卷烟牌子     ,零售价（零售）  生产厂家
+  //"city,license_no,order_id,order_date,cigarette_name,the_cost,need_goods_amount,order_amount,pay_money,cigarette_brand,retail_price,manufacturers"
 
 }

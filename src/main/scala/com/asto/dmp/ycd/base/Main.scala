@@ -16,8 +16,7 @@ object Main extends Logging {
       case "1" =>
         new DataPrepareService().run()
       case "2" =>
-
-        CalculationDao.categoryConcentration
+        CalculationDao.categoryConcentration.foreach(println)
       case "3" =>
         //授信模型
         new CreditService().run()
@@ -36,6 +35,5 @@ object Main extends Logging {
     Contexts.stopSparkContext()
     val endTime = System.currentTimeMillis()
     logInfo(s"程序共运行${(endTime - startTime) / 1000}秒")
-
   }
 }

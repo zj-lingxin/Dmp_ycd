@@ -12,4 +12,13 @@ object BizUtils {
     (now.get(Calendar.YEAR) * 12 + now.get(Calendar.MONTH)) -
       (theEarliestDate.get(Calendar.YEAR) * 12 + theEarliestDate.get(Calendar.MONTH))
   }
+
+  /**
+   * 保留两位小数
+   * @param number
+   * @return
+   */
+  def retainTwoDecimal(number: Double):Double = {
+    f"${number}%1.2f".toDouble
+  }
 }
