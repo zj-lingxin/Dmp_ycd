@@ -6,25 +6,17 @@ object Constants {
 
   /** App中的常量与每个项目相关 **/
   object App {
-    //spark UI界面显示的名称
     val SPARK_UI_APP_NAME = "烟草贷"
-    //项目的中文名称
     val CHINESE_NAME = "烟草贷"
-    //项目数据存放的Hadoop的目录
     val HADOOP_DIR = "hdfs://appcluster/ycd/"
-
-    val LOG_WRAPPER = "######################"
-
+    val LOG_WRAPPER = "##########"
     val YEAR_MONTH_DAY_FORMAT = "yyyy-MM-dd"
-
     val YEAR_MONTH_FORMAT = "yyyy-MM"
-
     val TODAY = DateUtils.getStrDate("yyyyMM/dd")
   }
 
   /** 输入文件路径 **/
   object InputPath {
-    //hdfs中表的字段的分隔符
     val SEPARATOR = "\t"
     private val DIR = s"${App.HADOOP_DIR}/input"
     val ORDER_INFO = s"$DIR/tobacco_order_info/*"
@@ -32,20 +24,14 @@ object Constants {
     val TOBACCO_PRICE = s"$DIR/tobacco_price/*"
     //整合了ORDER_DETAILS和TOBACCO_PRICE的信息
     val FULL_FIELDS_ORDER = s"$DIR/full_fields_order"
-    //val FULL_FIELDS_ORDER_INPUT = s"$DIR/full_fields_order/*"
   }
 
   /** 输出文件路径 **/
   object OutputPath {
     val SEPARATOR = "\t"
-
     private val DIR = s"${App.HADOOP_DIR}/output"
 
-
-    //授信结果路径
-    val CREDIT_TEXT = s"$DIR/text/${App.TODAY}/credit"
-
-    //得分结果路径
+    val CREDIT = s"$DIR/text/${App.TODAY}/credit"
     val SCORE = s"$DIR/text/${App.TODAY}/score"
     val GPA = s"$DIR/text/${App.TODAY}/GPA"
     val FIELD = s"$DIR/text/${App.TODAY}/field"
@@ -56,14 +42,10 @@ object Constants {
 
   /** 表的模式 **/
   object Schema {
-    //烟草订单信息：客户名称,许可证号,结算方式,订单号,状态,订货日期,品种数,总要货,总销售,进货额(成本),支付方式,城市,城市Id
-    //val ORDER_INFO = "customer_name,license_no,billing_methods,order_id,status,order_date,number_of_species,total_need_goods_amount,total_sales,total_pay_money,pay_by,city,city_id"*/
-
     //烟草订单详情：城市,许可证号,订单号,订货日期,卷烟名称,批发价,要货量(想要多少货),订货量(厂家给的货，也就是实际拿到的货),金额,生产厂家(与TOBACCO_PRICE中的冗余)
     val ORDER_DETAILS = "city,license_no,order_id,order_date,cigarette_name,the_cost,need_goods_amount,order_amount,pay_money,manufacturers"
     //卷烟名称,品牌系列,零售指导价(元/条),生产厂家
     val TOBACCO_PRICE = "cigarette_name,cigarette_brand,retail_price,manufacturers"
-
     //烟草订单详情：           城市,   许可证号,   订单号,   订货日期,       卷烟名称,（单条烟的）批发价|成本价,要货量(想要多少货),订货量(厂家给的货，也就是实际拿到的货),金额（要货量 * （单条烟的）批发价）,生产厂家(与TOBACCO_PRICE中的冗余)
     val FULL_FIELDS_ORDER = "city,license_no,order_id,order_date,cigarette_name,the_cost,need_goods_amount,order_amount,pay_money,cigarette_brand,retail_price,manufacturers"
   }
@@ -85,10 +67,6 @@ object Constants {
     val SCORE_SUBJECT = s"${App.CHINESE_NAME}-评分规则结果集写入失败，请尽快查明原因！"
     val FIELDS_CALCULATION_SUBJECT = s"${App.CHINESE_NAME}-字段计算的结果写入失败，请尽快查明原因！"
     val CREDIT_SUBJECT = s"${App.CHINESE_NAME}-授信规则结果集写入失败，请尽快查明原因！"
-    val ACCESS_SUBJECT = s"${App.CHINESE_NAME}-准入规则结果集写入失败，请尽快查明原因！"
-
-    val LOAN_WARNING_SUBJECT = s"${App.CHINESE_NAME}-贷后预警规则结果集写入失败，请尽快查明原因！"
     val DATA_PREPARE_SUBJECT = s"${App.CHINESE_NAME}-数据准备结果集写入失败，请尽快查明原因！"
   }
-
 }

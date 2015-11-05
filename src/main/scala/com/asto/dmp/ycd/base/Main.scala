@@ -19,7 +19,6 @@ object Main extends Logging {
       case "3" =>
         new ScoreService().run()
       case "4" =>
-        //授信模型
         new CreditService().run()
       case "5" =>
         //所有模型一起运行
@@ -27,7 +26,7 @@ object Main extends Logging {
         new DataPrepareService().run()
         new FieldsCalculationService().run()
         new ScoreService().run()
-
+        new CreditService().run()
       case _ =>
         logError(s"传入参数错误!传入的是${args(0)},请传入1~5")
     }

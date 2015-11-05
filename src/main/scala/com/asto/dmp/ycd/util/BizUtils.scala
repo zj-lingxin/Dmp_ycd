@@ -12,13 +12,4 @@ object BizUtils {
     (now.get(Calendar.YEAR) * 12 + now.get(Calendar.MONTH)) -
       (theEarliestDate.get(Calendar.YEAR) * 12 + theEarliestDate.get(Calendar.MONTH))
   }
-
-  /**
-   * 保留两位小数
-   * @param number
-   * @return
-   */
-  def retainDecimal(number: Double, bits: Int = 2):Double = {
-    BigDecimal(number).setScale(bits,BigDecimal.RoundingMode.HALF_UP).doubleValue()
-  }
 }

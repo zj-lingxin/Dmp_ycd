@@ -35,4 +35,11 @@ object Utils {
   def wrapLog(log: String) = {
     s"${Constants.App.LOG_WRAPPER} $log ${Constants.App.LOG_WRAPPER}"
   }
+
+  /**
+   * 保留两位小数
+   */
+  def retainDecimal(number: Double, bits: Int = 2): Double = {
+    BigDecimal(number).setScale(bits,BigDecimal.RoundingMode.HALF_UP).doubleValue()
+  }
 }

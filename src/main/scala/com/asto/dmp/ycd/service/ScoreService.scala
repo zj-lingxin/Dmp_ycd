@@ -1,10 +1,10 @@
 package com.asto.dmp.ycd.service
 
 import com.asto.dmp.ycd.base.{Constants, DataSource}
-import com.asto.dmp.ycd.dao.BizDao
+import com.asto.dmp.ycd.dao.BizDao._
 import com.asto.dmp.ycd.service.ScoreService._
 import com.asto.dmp.ycd.util.mail.MailAgent
-import com.asto.dmp.ycd.util.{FileUtils, BizUtils, Utils}
+import com.asto.dmp.ycd.util.{FileUtils, Utils}
 
 object ScoreService {
   //规模	权重:30%	 订货额年均值	近1年月均（提货额）	0≤(X-50000)/100000≤1
@@ -38,7 +38,7 @@ object ScoreService {
   val weightsOfOfflineShoppingDistrictIndex = 0.05
 
   private def finalScore(gpa: Double) = {
-    BizUtils.retainDecimal(gpa * 150 + 500, 0).toInt
+    Utils.retainDecimal(gpa * 150 + 500, 0).toInt
   }
 
   /** 获取规模得分 **/
@@ -93,9 +93,9 @@ object ScoreService {
    * 中文：(许可证号  ,(   订货额年均值绩点,            每条均价年均值绩点))
    */
   private def getScaleGPA = {
-    val payMoneyAnnAvgGPA = BizDao.payMoneyAnnAvg
+    val payMoneyAnnAvgGPA = payMoneyAnnAvg
       .map(t => (t._1, calcPayMoneyAnnAvgGPA(t._2)))
-    val perCigarAvgPriceOfAnnAvgGPA = BizDao.perCigarAvgPriceOfAnnAvg
+    val perCigarAvgPriceOfAnnAvgGPA = perCigarAvgPriceOfAnnAvg
       .map(t => (t._1, calcPerCigarAvgPriceOfAnnAvgGPA(t._2)))
     payMoneyAnnAvgGPA.leftOuterJoin(perCigarAvgPriceOfAnnAvgGPA).map(t => (t._1, (t._2._1, t._2._2.get)))
   }
@@ -106,9 +106,9 @@ object ScoreService {
    * 中文：(许可证号  ,(   销售额租金比绩点,           1年毛利率绩点))
    */
   private def getProfitGPA = {
-    val salesRentRatioGPA = BizDao.salesRentRatio
+    val salesRentRatioGPA = salesRentRatio
       .map(t => (t._1, calcSalesRentRatioGPA(t._2)))
-    val grossMarginLastYearGPA = BizDao.grossMarginLastYear
+    val grossMarginLastYearGPA = grossMarginLastYear
       .map(t => (t._1, calcGrossMarginLastYearGPA(t._2)))
     salesRentRatioGPA.leftOuterJoin(grossMarginLastYearGPA).map(t => (t._1, (t._2._1, t._2._2.get)))
   }
@@ -119,7 +119,7 @@ object ScoreService {
    * 中文：(许可证号  ,             月销售增长比绩点)
    */
   private def getGrowingUpGPA = {
-    val monthlySalesGrowthRatioGPA = BizDao.monthlySalesGrowthRatio
+    val monthlySalesGrowthRatioGPA = monthlySalesGrowthRatio
       .map(t => (t._1, calcMonthlySalesGrowthRatioGPA(t._2)))
     monthlySalesGrowthRatioGPA
   }
@@ -130,13 +130,13 @@ object ScoreService {
    * 中文：(许可证号  , (    订货条数年均值绩点,                    经营期限绩点,                  活跃品类绩点,            品类集中度绩点))
    */
   private def getOperationGPA = {
-    val orderAmountAnnAvgGPA = BizDao.orderAmountAnnAvg
+    val orderAmountAnnAvgGPA = orderAmountAnnAvg
       .map(t => (t._1, calcOrderAmountAnnAvgGPA(t._2)))
-    val monthsNumFromEarliestOrderGPA = BizDao.monthsNumFromEarliestOrder
+    val monthsNumFromEarliestOrderGPA = monthsNumFromEarliestOrder
       .map(t => (t._1, calcMonthsNumFromEarliestOrderGPA(t._2)))
-    val activeCategoryInLastMonthGPA = BizDao.getActiveCategoryInLastMonth
+    val activeCategoryInLastMonthGPA = getActiveCategoryInLastMonth
       .map(t => (t._1, calcActiveCategoryInLastMonthGPA(t._2)))
-    val categoryConcentrationGPA = BizDao.categoryConcentration
+    val categoryConcentrationGPA = categoryConcentration
       .map(t => (t._1, calcCategoryConcentrationGPA(t._2)))
     val tempOperationsGPA1 = orderAmountAnnAvgGPA.leftOuterJoin(monthsNumFromEarliestOrderGPA).map(t => (t._1, (t._2._1, t._2._2.get)))
     val tempOperationsGPA2 = activeCategoryInLastMonthGPA.leftOuterJoin(categoryConcentrationGPA).map(t => (t._1, (t._2._1, t._2._2.get)))
@@ -149,7 +149,7 @@ object ScoreService {
    * 中文：(许可证号  ,                      线下商圈指数)
    */
   private def getMarketGPA = {
-    val offlineShoppingDistrictIndexGPA = BizDao.offlineShoppingDistrictIndex
+    val offlineShoppingDistrictIndexGPA = offlineShoppingDistrictIndex
       .map(t => (t._1, calcOfflineShoppingDistrictIndexGPA(t._2)))
     offlineShoppingDistrictIndexGPA
   }
@@ -178,7 +178,7 @@ object ScoreService {
   def getResultGPA = getAllGPA.map(t => (t._1, t._2._1, t._2._2, t._2._3, t._2._4, t._2._5, t._2._6, t._2._7, t._2._8, t._2._9, t._2._10))
 
   def getAllScore = {
-    getAllGPA.map(t => (t._1, getScaleScore(t._2._1, t._2._2), getProfitScore(t._2._3, t._2._4), getGrowingUpScore(t._2._5), getOperationScore(t._2._6, t._2._7, t._2._8, t._2._9), getMarketScore(t._2._10), getTotalScore(t._2)))
+    getAllGPA.map(t => (t._1, getScaleScore(t._2._1, t._2._2), getProfitScore(t._2._3, t._2._4), getGrowingUpScore(t._2._5), getOperationScore(t._2._6, t._2._7, t._2._8, t._2._9), getMarketScore(t._2._10), getTotalScore(t._2))).cache()
   }
 
   private def rangeOfGPA(GPA: Double) = {
@@ -194,11 +194,11 @@ object ScoreService {
 class ScoreService extends DataSource {
 
   def run(): Unit = {
-    try {
+    try
       logInfo(Utils.wrapLog("开始运行评分模型"))
-      FileUtils.saveAsTextFile(ScoreService.getResultGPA, Constants.OutputPath.GPA)
-      FileUtils.saveAsTextFile(ScoreService.getAllScore, Constants.OutputPath.SCORE)
-    } catch {
+      FileUtils.saveAsTextFile(getResultGPA, Constants.OutputPath.GPA)
+      FileUtils.saveAsTextFile(getAllScore, Constants.OutputPath.SCORE)
+    catch {
       case t: Throwable =>
         MailAgent(t, Constants.Mail.SCORE_SUBJECT).sendMessage()
         logError(Constants.Mail.SCORE_SUBJECT, t)

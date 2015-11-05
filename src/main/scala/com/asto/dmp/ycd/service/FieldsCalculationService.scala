@@ -35,7 +35,6 @@ object FieldsCalculationService {
   }
 }
 
-
 class FieldsCalculationService extends DataSource {
   def run(): Unit = {
     try {
