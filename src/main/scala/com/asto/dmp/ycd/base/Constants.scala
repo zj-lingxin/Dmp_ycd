@@ -41,16 +41,17 @@ object Constants {
 
     private val DIR = s"${App.HADOOP_DIR}/output"
 
-    //反欺诈结果路径
-    val ANTI_FRAUD_TEXT = s"$DIR/text/${App.TODAY}/fraud"
-    //得分结果路径
-    val SCORE_TEXT = s"$DIR/text/${App.TODAY}/score"
+
     //授信结果路径
     val CREDIT_TEXT = s"$DIR/text/${App.TODAY}/credit"
-    //准入结果路径
-    val ACCESS_TEXT = s"$DIR/text/${App.TODAY}/access"
-    //贷后预警结果路径
-    val LOAN_WARNING_TEXT = s"$DIR/text/${App.TODAY}/warning"
+
+    //得分结果路径
+    val SCORE = s"$DIR/text/${App.TODAY}/score"
+    val GPA = s"$DIR/text/${App.TODAY}/GPA"
+    val FIELD = s"$DIR/text/${App.TODAY}/field"
+    val ACTIVE_CATEGORY = s"$DIR/text/${App.TODAY}/activeCategory"
+    val GROSS_MARGIN_PER_MONTH_CATEGORY = s"$DIR/text/${App.TODAY}/grossMarginPerMonthCategory"
+    val GROSS_MARGIN_PER_MONTH_ALL = s"$DIR/text/${App.TODAY}/grossMarginPerMonthAll"
   }
 
   /** 表的模式 **/
@@ -81,9 +82,11 @@ object Constants {
     val ENABLE = "false"
 
     //以下参数prop.properties中没有， MAIL_CREDIT_SUBJECT是授信规则模型出问题时邮件的主题
+    val SCORE_SUBJECT = s"${App.CHINESE_NAME}-评分规则结果集写入失败，请尽快查明原因！"
+    val FIELDS_CALCULATION_SUBJECT = s"${App.CHINESE_NAME}-字段计算的结果写入失败，请尽快查明原因！"
     val CREDIT_SUBJECT = s"${App.CHINESE_NAME}-授信规则结果集写入失败，请尽快查明原因！"
     val ACCESS_SUBJECT = s"${App.CHINESE_NAME}-准入规则结果集写入失败，请尽快查明原因！"
-    val SCORE_SUBJECT = s"${App.CHINESE_NAME}-评分规则结果集写入失败，请尽快查明原因！"
+
     val LOAN_WARNING_SUBJECT = s"${App.CHINESE_NAME}-贷后预警规则结果集写入失败，请尽快查明原因！"
     val DATA_PREPARE_SUBJECT = s"${App.CHINESE_NAME}-数据准备结果集写入失败，请尽快查明原因！"
   }

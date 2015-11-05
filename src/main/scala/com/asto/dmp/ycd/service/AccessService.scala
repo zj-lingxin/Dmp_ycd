@@ -13,7 +13,7 @@ class AccessService extends DataSource {
     try {
       logInfo(Utils.wrapLog("开始运行准入模型"))
 
-      FileUtils.saveAsTextFile(null, Constants.OutputPath.ACCESS_TEXT)
+
     } catch {
       case t: Throwable =>
         MailAgent(t, Constants.Mail.ACCESS_SUBJECT).sendMessage()
