@@ -76,6 +76,7 @@ object BizDao extends Dao {
    * 活跃品类数
    * 当月月均活跃品类，为前三个月月均的订货量≥3的品类之和，如2015.10显示的活跃品类为，2015.8-2015.10三个月订货量≥9的，品类数之和；
    * 计算12个月的活跃评类数。如果不能提取到14个月的数据，则最初两个月的数据为空，均值按近十个月计算；
+   * 返回：许可证号，日期，活跃品类数
    */
   def getActiveCategoryInLast12Months = {
     val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()
@@ -118,6 +119,7 @@ object BizDao extends Dao {
   /**
    * 单品毛利率 = （零售指导价-成本价）/指导价*100%
    * 按月计算
+   * 返回：许可证号，年月，卷烟牌子，毛利率
    */
   def grossMarginPerMonthCategory = {
     val array = BizDao.getFullFieldsOrderProps(SQL().select("license_no,order_date,pay_money,order_amount,retail_price,cigarette_name"))
@@ -137,6 +139,7 @@ object BizDao extends Dao {
    * 客户各品类毛利率
    * 毛利率=毛利/销售金额=（销售金额-成本(进货额））/销售金额=1-成本（pay_money）/销售金额（order_amount*retail_price）
    * 按月计算
+   * 返回：许可证号，日期，每月毛利率
    */
   def grossMarginPerMonthAll = {
     val array = BizDao.getFullFieldsOrderProps(SQL().select("license_no,order_date,pay_money,order_amount,retail_price"))

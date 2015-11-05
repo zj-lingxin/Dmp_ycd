@@ -28,7 +28,7 @@ object CreditService {
   def getAmountOfCredit = {
     BizDao.payMoneyAnnAvg
       .leftOuterJoin(ScoreService.getAllScore.map(t => (t._1, t._7)))
-      .map(t => (t._1, t._2._1, t._2._2.get, getScoreCoefficient(t._2._2.get.toString.toInt), Math.min(maxAmountOfCredit, Utils.retainDecimal(getScoreCoefficient(t._2._2.get) * t._2._1, 0))))
+      .map(t => (t._1, t._2._1, t._2._2.get, getScoreCoefficient(t._2._2.get.toString.toInt), Math.min(maxAmountOfCredit, Utils.retainDecimal(getScoreCoefficient(t._2._2.get) * t._2._1, 0).toLong)))
   }
 }
 

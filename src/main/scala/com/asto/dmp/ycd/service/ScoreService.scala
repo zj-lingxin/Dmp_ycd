@@ -174,9 +174,13 @@ object ScoreService {
 
   /**
    * getAllGPA这个RDD调整后的格式，用于输出到文件的格式
+   * 输出：许可证号，订货额年均值绩点，每条均价年均值绩点，	销售额租金比绩点，1年毛利率绩点，月销售增长比绩点，订货条数年均值绩点，	经营期限绩点，活跃品类绩点，品类集中度绩点，线下商圈指数
    */
   def getResultGPA = getAllGPA.map(t => (t._1, t._2._1, t._2._2, t._2._3, t._2._4, t._2._5, t._2._6, t._2._7, t._2._8, t._2._9, t._2._10))
 
+  /**
+   * 输出：许可证号，规模得分	，盈利得分，成长得分，运营得分	，市场得分，总得分
+   */
   def getAllScore = {
     getAllGPA.map(t => (t._1, getScaleScore(t._2._1, t._2._2), getProfitScore(t._2._3, t._2._4), getGrowingUpScore(t._2._5), getOperationScore(t._2._6, t._2._7, t._2._8, t._2._9), getMarketScore(t._2._10), getTotalScore(t._2))).cache()
   }
@@ -194,11 +198,11 @@ object ScoreService {
 class ScoreService extends DataSource {
 
   def run(): Unit = {
-    try
+    try {
       logInfo(Utils.wrapLog("开始运行评分模型"))
       FileUtils.saveAsTextFile(getResultGPA, Constants.OutputPath.GPA)
       FileUtils.saveAsTextFile(getAllScore, Constants.OutputPath.SCORE)
-    catch {
+    } catch {
       case t: Throwable =>
         MailAgent(t, Constants.Mail.SCORE_SUBJECT).sendMessage()
         logError(Constants.Mail.SCORE_SUBJECT, t)
