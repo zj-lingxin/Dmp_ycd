@@ -16,8 +16,8 @@ object Main extends Logging {
       case "1" =>
         new DataPrepareService().run()
       case "2" =>
-        //new ScoreService().run()
-        ScoreDao.grossMarginLastYearGroupByLicenseNo.foreach(println)
+        new ScoreService().run()
+        //ScoreDao.categoryConcentration.foreach(println)
       case "3" =>
         //授信模型
         new CreditService().run()

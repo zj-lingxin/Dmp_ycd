@@ -32,7 +32,8 @@ object ScoreDao {
    * 计算年均值。订货额年均值和订货条数年均值的计算过程基本相同，除了第二个字段不同，所以提取出计算逻辑。
    */
   private def lastMonthsAvg(fields: String, backMonthsNum: Int) = {
-    lastMonthsSum(fields, backMonthsNum).map(t => (t._1, t._2 / backMonthsNum))
+    lastMonthsSum(fields, backMonthsNum)
+      .map(t => (t._1, t._2 / backMonthsNum))
   }
 
   /**
@@ -69,7 +70,7 @@ object ScoreDao {
    * 当月月均活跃品类，为前三个月月均的订货量≥3的品类之和，如2015.10显示的活跃品类为，2015.8-2015.10三个月订货量≥9的，品类数之和；
    * 计算12个月的活跃评类数。如果不能提取到14个月的数据，则最初两个月的数据为空，均值按近十个月计算；
    */
-  def getActiveCategoryForEveryLicenseNo = {
+  def getActiveCategoryInLast12Months = {
     val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()
     licenseNoArray.foreach(list ++= getActiveCategoryInLast12MonthsFor(_))
     list
@@ -85,6 +86,20 @@ object ScoreDao {
     list
   }
 
+  /**
+   * 获取当月活跃品类数
+   */
+  def getActiveCategoryInLastMonth = {
+    BizDao.getFullFieldsOrderProps(SQL().select("license_no,cigarette_name,order_date,order_amount").where(s" order_date >= '${DateUtils.monthsAgo(3, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'"))
+      .map(a => ((a(0).toString,a(1).toString), a(3).toString.toInt))
+      .groupByKey()
+      .map(t => (t._1, t._2.sum))
+      .filter(t => t._2 >= 9)
+      .map(t => (t._1._1,1))
+      .groupByKey()
+      .map(t => (t._1,t._2.sum))
+  }
+
   private def countNumbersOfActiveCategoryForMonth(m: Int, licenseNo: String) = {
     BizDao.getFullFieldsOrderProps(SQL().select("cigarette_name,order_date,order_amount").where(s" order_date >= '${DateUtils.monthsAgo(m + 3, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(m, "yyyy-MM-01")}' and license_no = '$licenseNo'"))
       .map(a => (a(0).toString, a(2).toString.toInt))
@@ -98,7 +113,7 @@ object ScoreDao {
    * 单品毛利率 = （零售指导价-成本价）/指导价*100%
    * 按月计算
    */
-  def grossMarginPerMonthGroupByLicenseNoAndCategory = {
+  def grossMarginPerMonthByCategory = {
     BizDao.getFullFieldsOrderProps(SQL().select("license_no,order_date,pay_money,order_amount,retail_price,cigarette_name"))
       .map(a => ((a(0).toString, a(1).toString.substring(0, 7), a(5).toString), (a(2).toString.toDouble, a(3).toString.toInt * a(4).toString.toDouble)))
       .groupByKey()
@@ -112,7 +127,7 @@ object ScoreDao {
    * 毛利率=毛利/销售金额=（销售金额-成本(进货额））/销售金额=1-成本（pay_money）/销售金额（order_amount*retail_price）
    * 按月计算
    */
-  def grossMarginPerMonthGroupByLicenseNo = {
+  def grossMarginPerMonth = {
     BizDao.getFullFieldsOrderProps(SQL().select("license_no,order_date,pay_money,order_amount,retail_price"))
       .map(a => ((a(0).toString, a(1).toString.substring(0, 7)), (a(2).toString.toDouble, a(3).toString.toInt * a(4).toString.toDouble)))
       .groupByKey()
@@ -124,7 +139,7 @@ object ScoreDao {
    * 近一年毛利率
    * @return
    */
-  def grossMarginLastYearGroupByLicenseNo = {
+  def grossMarginLastYear = {
     BizDao.getFullFieldsOrderProps(
       SQL()
         .select("license_no,pay_money,order_amount,retail_price")
@@ -133,7 +148,7 @@ object ScoreDao {
       .map(a => (a(0), (a(1).toString.toDouble, a(2).toString.toInt * a(3).toString.toDouble)))
       .groupByKey()
       .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
-      .map(t => (t._1, BizUtils.retainDecimal(1 - t._2._1 / t._2._2, 3)))
+      .map(t => (t._1.toString, BizUtils.retainDecimal(1 - t._2._1 / t._2._2, 3)))
   }
 
   /**
@@ -157,14 +172,15 @@ object ScoreDao {
   }
 
   /**
-   * 品类集中度：近12月销售额最高的前10名的销售额占总销售额的比重，TOP10商品对应销售额/总销售额（近12月）
+   * 品类集中度：近12月销售额最高的前10名的销售额占总销售额的比重，TOP10商品的销售额之和/总销售额（近12月）
    */
   def categoryConcentration = {
     Contexts.getSparkContext
       .parallelize(getTop10CategoryForEachLicenseNo)
       .leftOuterJoin(getLast12MonthsSales)
-      .map(t => (t._1, BizUtils.retainDecimal(t._2._1._1 / t._2._2.get), t._2._1._2))
-
+      .map(t => (t._1, t._2._1._1 / t._2._2.get))
+      .groupByKey()
+      .map(t => (t._1, BizUtils.retainDecimal(t._2.sum)))
   }
 
   private def getTop10CategoryForEachLicenseNo = {
@@ -214,7 +230,7 @@ object ScoreDao {
    * 线下商圈指数
    * 暂时缺失数据，默认为0.8
    */
-  def OfflineShoppingDistrictIndex = {
+  def offlineShoppingDistrictIndex = {
     Contexts.getSparkContext.parallelize(licenseNoArray).map((_,0.8D))
   }
 }
