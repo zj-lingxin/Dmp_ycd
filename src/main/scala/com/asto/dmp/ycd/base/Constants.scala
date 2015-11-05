@@ -83,7 +83,7 @@ object Constants {
     //以下参数prop.properties中没有， MAIL_CREDIT_SUBJECT是授信规则模型出问题时邮件的主题
     val CREDIT_SUBJECT = s"${App.CHINESE_NAME}-授信规则结果集写入失败，请尽快查明原因！"
     val ACCESS_SUBJECT = s"${App.CHINESE_NAME}-准入规则结果集写入失败，请尽快查明原因！"
-    val ANTI_FRAUD_SUBJECT = s"${App.CHINESE_NAME}-反欺诈规则结果集写入失败，请尽快查明原因！"
+    val SCORE_SUBJECT = s"${App.CHINESE_NAME}-评分规则结果集写入失败，请尽快查明原因！"
     val LOAN_WARNING_SUBJECT = s"${App.CHINESE_NAME}-贷后预警规则结果集写入失败，请尽快查明原因！"
     val DATA_PREPARE_SUBJECT = s"${App.CHINESE_NAME}-数据准备结果集写入失败，请尽快查明原因！"
   }

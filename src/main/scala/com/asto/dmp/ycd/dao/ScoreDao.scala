@@ -3,16 +3,13 @@ package com.asto.dmp.ycd.dao
 import com.asto.dmp.ycd.base._
 import com.asto.dmp.ycd.util.{DateUtils, BizUtils}
 
-/**
- * 指标计算
- */
-object CalculationDao {
+object ScoreDao {
   private val licenseNoArray = BizDao.getFullFieldsOrderProps(SQL().select("license_no")).map(a => a(0).toString).distinct().collect()
 
   /**
    * 经营期限（月）= 申请贷款月份(系统运行时间) - 最早一笔网上订单的月份
    */
-  def monthsNumsFromEarliestOrder() = {
+  def monthsNumsFromEarliestOrder = {
     BizDao.getFullFieldsOrderProps(SQL().select("license_no,order_date"))
       .map(a => (a(0).toString, a(1).toString))
       .groupByKey()
@@ -23,18 +20,18 @@ object CalculationDao {
    * 订货额年均值 = 近12个月（不含贷款当前月）“金额”字段，金额之和/12
    * 返回的元素,如：(33010120120716288A,68260)
    */
-  def payMoneyAnnualAverage() = lastMonthsAverage("license_no,pay_money", 12)
+  def payMoneyAnnAvg = lastMonthsAvg("license_no,pay_money", 12)
 
   /**
    * 订货条数年均值 = 近12个月（不含贷款当前月）“订货量”字段，订货量之和/12、
    * 返回的元素,如：(33010120120716288A,427)
    */
-  def orderAmountAnnualAverage() = lastMonthsAverage("license_no,order_amount", 12)
+  def orderAmountAnnAvg = lastMonthsAvg("license_no,order_amount", 12)
 
   /**
    * 计算年均值。订货额年均值和订货条数年均值的计算过程基本相同，除了第二个字段不同，所以提取出计算逻辑。
    */
-  private def lastMonthsAverage(fields: String, backMonthsNum: Int) = {
+  private def lastMonthsAvg(fields: String, backMonthsNum: Int) = {
     lastMonthsSum(fields, backMonthsNum).map(t => (t._1, t._2 / backMonthsNum))
   }
 
@@ -60,9 +57,9 @@ object CalculationDao {
   /**
    * 每条均价年均值 = 近12月总提货额 / 近12月总进货条数
    */
-  def perCigaretteAveragePriceOfAnnualAverage = {
+  def perCigarAvgPriceOfAnnAvg = {
     lastMonthsSum("license_no,pay_money", 12)
-      .leftOuterJoin(lastMonthsAverage("license_no,order_amount", 12)) //(33010120120716288A,(819131,Some(427)))
+      .leftOuterJoin(lastMonthsSum("license_no,order_amount", 12))
       .filter(t => t._2._2.isDefined && t._2._2.get.toDouble > 0)
       .map(t => (t._1, t._2._1 / t._2._2.get))
   }
@@ -79,7 +76,7 @@ object CalculationDao {
   }
 
   private def getActiveCategoryInLast12MonthsFor(licenseNo: String) = {
-    val monthsNumsFromEarliestOrderMap = monthsNumsFromEarliestOrder().collect().toMap[String, Int]
+    val monthsNumsFromEarliestOrderMap = monthsNumsFromEarliestOrder.collect().toMap[String, Int]
     val monthNums = Math.min(monthsNumsFromEarliestOrderMap(licenseNo), 14)
     val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()
     (0 to 11).toStream.takeWhile(m => (m + 3) <= monthNums).foreach {
@@ -101,13 +98,13 @@ object CalculationDao {
    * 单品毛利率 = （零售指导价-成本价）/指导价*100%
    * 按月计算
    */
-  def grossMarginInSingleCategory = {
+  def grossMarginPerMonthGroupByLicenseNoAndCategory = {
     BizDao.getFullFieldsOrderProps(SQL().select("license_no,order_date,pay_money,order_amount,retail_price,cigarette_name"))
       .map(a => ((a(0).toString, a(1).toString.substring(0, 7), a(5).toString), (a(2).toString.toDouble, a(3).toString.toInt * a(4).toString.toDouble)))
       .groupByKey()
       .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
       .filter(t => t._2._1.toInt > 0 && t._2._2.toInt > 0)
-      .map(t => (t._1, BizUtils.retainTwoDecimal(1 - t._2._1 / t._2._2)))
+      .map(t => (t._1, BizUtils.retainDecimal(1 - t._2._1 / t._2._2, 3)))
   }
 
   /**
@@ -115,12 +112,28 @@ object CalculationDao {
    * 毛利率=毛利/销售金额=（销售金额-成本(进货额））/销售金额=1-成本（pay_money）/销售金额（order_amount*retail_price）
    * 按月计算
    */
-  def grossMarginInShop = {
+  def grossMarginPerMonthGroupByLicenseNo = {
     BizDao.getFullFieldsOrderProps(SQL().select("license_no,order_date,pay_money,order_amount,retail_price"))
       .map(a => ((a(0).toString, a(1).toString.substring(0, 7)), (a(2).toString.toDouble, a(3).toString.toInt * a(4).toString.toDouble)))
       .groupByKey()
       .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
-      .map(t => (t._1, BizUtils.retainTwoDecimal(1 - t._2._1 / t._2._2))) //((33010220120807247A,2015-01),0.18)
+      .map(t => (t._1, BizUtils.retainDecimal(1 - t._2._1 / t._2._2, 3))) //((33010220120807247A,2015-01),0.18)
+  }
+
+  /**
+   * 近一年毛利率
+   * @return
+   */
+  def grossMarginLastYearGroupByLicenseNo = {
+    BizDao.getFullFieldsOrderProps(
+      SQL()
+        .select("license_no,pay_money,order_amount,retail_price")
+        .where(s" order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'")
+    )
+      .map(a => (a(0), (a(1).toString.toDouble, a(2).toString.toInt * a(3).toString.toDouble)))
+      .groupByKey()
+      .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
+      .map(t => (t._1, BizUtils.retainDecimal(1 - t._2._1 / t._2._2, 3)))
   }
 
   /**
@@ -128,21 +141,19 @@ object CalculationDao {
    * 返回的数据保留两位小数
    */
   def monthlySalesGrowthRatio = {
-    lastMonthsAverage("license_no,pay_money", 3)
-      .leftOuterJoin(lastMonthsActualAverage(6)) //(33010102981025009A,(130263,Some(125425)))
-      .map(t => (t._1, BizUtils.retainTwoDecimal(t._2._1.toDouble / t._2._2.get)))
+    lastMonthsAvg("license_no,pay_money", 3)
+      .leftOuterJoin(lastMonthsActualAvg(6)) //(33010102981025009A,(130263,Some(125425)))
+      .map(t => (t._1, BizUtils.retainDecimal(t._2._1.toDouble / t._2._2.get)))
   }
 
   /**
    * 如果实际月数小于monthsNums，那么取实际的那个月份数
    */
-  private def lastMonthsActualAverage(monthsNums: Int) = {
+  private def lastMonthsActualAvg(monthsNums: Int) = {
     lastMonthsSum("license_no,pay_money", monthsNums)
-      .leftOuterJoin(monthsNumsFromEarliestOrder())
+      .leftOuterJoin(monthsNumsFromEarliestOrder)
       .map(t => (t._1, t._2._1, Math.min(t._2._2.getOrElse(0), monthsNums)))
-      .map(t => (t._1, {
-      (t._2 / t._3)
-    }))
+      .map(t => (t._1, t._2 / t._3))
   }
 
   /**
@@ -152,7 +163,7 @@ object CalculationDao {
     Contexts.getSparkContext
       .parallelize(getTop10CategoryForEachLicenseNo)
       .leftOuterJoin(getLast12MonthsSales)
-      .map(t =>((t._1, BizUtils.retainTwoDecimal(t._2._1._1 / t._2._2.get), t._2._1._2)))
+      .map(t => (t._1, BizUtils.retainDecimal(t._2._1._1 / t._2._2.get), t._2._1._2))
 
   }
 
@@ -162,7 +173,7 @@ object CalculationDao {
     val list = scala.collection.mutable.ListBuffer[(String, (Double, String))]()
     licenseNoArray.foreach {
       licenseNo =>
-        for (a <- array if (a._1 == licenseNo && topIndex < 10)) {
+        for (a <- array if a._1 == licenseNo && topIndex < 10) {
           list += a
           topIndex += 1
         }
@@ -178,7 +189,7 @@ object CalculationDao {
       .groupByKey()
       .map(t => (t._1, t._2.sum))
       .map(t => ((t._1._1, t._2), t._1._2))
-      .sortByKey(false).map(t => (t._1._1, (t._1._2, t._2))).collect() //((33010220120807247A,300.0),七匹狼(蓝))
+      .sortByKey(ascending = false).map(t => (t._1._1, (t._1._2, t._2))).collect() //((33010220120807247A,300.0),七匹狼(蓝))
   }
 
   private def getLast12MonthsSales = {
@@ -191,4 +202,19 @@ object CalculationDao {
   // 城市,   许可证号,    订单号,  订货日期,       卷烟名称,   批发价,             要货量,      订货量, 成本|金额,   卷烟牌子     ,零售价（零售）  生产厂家
   //"city,license_no,order_id,order_date,cigarette_name,the_cost,need_goods_amount,order_amount,pay_money,cigarette_brand,retail_price,manufacturers"
 
+  /**
+   * 销售额租金比
+   * 暂时缺失数据，默认为0
+   */
+  def salesRentRatio = {
+    Contexts.getSparkContext.parallelize(licenseNoArray).map((_,0D))
+  }
+
+  /**
+   * 线下商圈指数
+   * 暂时缺失数据，默认为0.8
+   */
+  def OfflineShoppingDistrictIndex = {
+    Contexts.getSparkContext.parallelize(licenseNoArray).map((_,0.8D))
+  }
 }

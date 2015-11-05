@@ -17,8 +17,8 @@ class AntiFraudService extends DataSource with Serializable {
       BizDao.getOrderDetailsProps(SQL().select("*").limit(10)).collect.map(a => (a(0),a(5))).foreach(println)
     } catch {
       case t: Throwable =>
-        MailAgent(t, Constants.Mail.ANTI_FRAUD_SUBJECT).sendMessage()
-        logError(Constants.Mail.ANTI_FRAUD_SUBJECT, t)
+
+
     } finally {
       logInfo(Utils.wrapLog("反欺诈模型运行结束"))
     }

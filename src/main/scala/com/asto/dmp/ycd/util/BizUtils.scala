@@ -18,7 +18,7 @@ object BizUtils {
    * @param number
    * @return
    */
-  def retainTwoDecimal(number: Double):Double = {
-    f"${number}%1.2f".toDouble
+  def retainDecimal(number: Double, bits: Int = 2):Double = {
+    BigDecimal(number).setScale(bits,BigDecimal.RoundingMode.HALF_UP).doubleValue()
   }
 }

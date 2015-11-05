@@ -1,6 +1,6 @@
 package com.asto.dmp.ycd.base
 
-import com.asto.dmp.ycd.dao.CalculationDao
+import com.asto.dmp.ycd.dao.ScoreDao
 import com.asto.dmp.ycd.service._
 import com.asto.dmp.ycd.util.Utils
 import org.apache.spark.Logging
@@ -16,13 +16,14 @@ object Main extends Logging {
       case "1" =>
         new DataPrepareService().run()
       case "2" =>
-        CalculationDao.categoryConcentration.foreach(println)
+        //new ScoreService().run()
+        ScoreDao.grossMarginLastYearGroupByLicenseNo.foreach(println)
       case "3" =>
         //授信模型
         new CreditService().run()
       case "4" =>
         //贷后模型
-        new LoanWarningService().run()
+        new ScoreService().run()
       case "5" =>
         //所有模型一起运行
         logInfo(Utils.wrapLog("所有模型一起运行"))
