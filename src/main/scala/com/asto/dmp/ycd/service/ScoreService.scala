@@ -10,8 +10,8 @@ object ScoreService {
   //规模	权重:30%	 订货额年均值	近1年月均（提货额）	0≤(X-50000)/100000≤1
   val weightsOfPayMoneyAnnAvg = 0.3
 
-  //规模	权重:5%	每条均价年均值	客单价（每条进货均价）0≤(X-120)/120≤1
-  val weightsOfPerCigarAvgPriceOfAnnAvg = 0.05
+  //规模	权重:5% 订货条数年均值 平均每月订货量（条）
+  val weightsOfOrderAmountAnnAvg = 0.05
 
   //盈利	权重:10%	 销售额租金比	月均提货额 除 租赁合同月均租金额  	0≤X/10≤1
   val weightsOfSalesRentRatio = 0.1
@@ -22,8 +22,8 @@ object ScoreService {
   //成长	权重:20%	月销售增长比	近3月平均销售/近6月平均销售
   val weightsOfMonthlySalesGrowthRatio = 0.2
 
-  //运营 权重:5%	订货条数年均值 平均每月订货量（条）
-  val weightsOfOrderAmountAnnAvg = 0.05
+  //运营 权重:5%	每条均价年均值	客单价（每条进货均价）0≤(X-120)/120≤1
+  val weightsOfPerCigarAvgPriceOfAnnAvg = 0.05
 
   //运营	权重:5%	经营期限（月）申报月起经营月份数 减 最早一笔网上订单的月份
   val weightsOfMonthsNumsFromEarliestOrder = 0.05
@@ -42,34 +42,34 @@ object ScoreService {
   }
 
   /** 获取规模得分 **/
-  private def getScaleScore(scoreOfPayMoneyAnnAvgGPA: Double, scoreOfPerCigarAvgPriceOfAnnAvgGPA: Double) =
-    finalScore((weightsOfPayMoneyAnnAvg * scoreOfPayMoneyAnnAvgGPA + weightsOfPerCigarAvgPriceOfAnnAvg * scoreOfPerCigarAvgPriceOfAnnAvgGPA) / (weightsOfPayMoneyAnnAvg + weightsOfPerCigarAvgPriceOfAnnAvg))
+  private def getScaleScore(payMoneyAnnAvgGPA: Double, orderAmountAnnAvgGPA: Double) =
+    finalScore((weightsOfPayMoneyAnnAvg * payMoneyAnnAvgGPA + weightsOfOrderAmountAnnAvg * orderAmountAnnAvgGPA) / (weightsOfPayMoneyAnnAvg + weightsOfOrderAmountAnnAvg))
 
   /** 获取盈利得分 **/
-  private def getProfitScore(weightsOfSalesRentRatioGPA: Double, weightsOfgrossMarginLastYearGPA: Double) =
-    finalScore((weightsOfSalesRentRatio * weightsOfSalesRentRatioGPA + weightsOfGrossMarginLastYear * weightsOfgrossMarginLastYearGPA) / (weightsOfSalesRentRatio + weightsOfGrossMarginLastYear))
+  private def getProfitScore(weightsOfSalesRentRatioGPA: Double, weightsOfGrossMarginLastYearGPA: Double) =
+    finalScore((weightsOfSalesRentRatio * weightsOfSalesRentRatioGPA + weightsOfGrossMarginLastYear * weightsOfGrossMarginLastYearGPA) / (weightsOfSalesRentRatio + weightsOfGrossMarginLastYear))
 
   /** 获取成长得分 **/
   private def getGrowingUpScore(monthlySalesGrowthRatioGPA: Double) = finalScore(monthlySalesGrowthRatioGPA)
 
   /** 获取运营得分 **/
-  private def getOperationScore(orderAmountAnnAvgGPA: Double, monthsNumFromEarliestOrderGPA: Double, activeCategoryInLastMonthGPA: Double, categoryConcentrationGPA: Double) =
-    finalScore((weightsOfOrderAmountAnnAvg * orderAmountAnnAvgGPA + weightsOfMonthsNumsFromEarliestOrder * monthsNumFromEarliestOrderGPA + weightsOfActiveCategoryInLastMonth * activeCategoryInLastMonthGPA + weightsOfCategoryConcentration * categoryConcentrationGPA) / (weightsOfOrderAmountAnnAvg + weightsOfMonthsNumsFromEarliestOrder + weightsOfActiveCategoryInLastMonth + weightsOfCategoryConcentration))
+  private def getOperationScore(perCigarAvgPriceOfAnnAvgGPA: Double, monthsNumFromEarliestOrderGPA: Double, activeCategoryInLastMonthGPA: Double, categoryConcentrationGPA: Double) =
+    finalScore((weightsOfPerCigarAvgPriceOfAnnAvg * perCigarAvgPriceOfAnnAvgGPA + weightsOfMonthsNumsFromEarliestOrder * monthsNumFromEarliestOrderGPA + weightsOfActiveCategoryInLastMonth * activeCategoryInLastMonthGPA + weightsOfCategoryConcentration * categoryConcentrationGPA) / (weightsOfPerCigarAvgPriceOfAnnAvg + weightsOfMonthsNumsFromEarliestOrder + weightsOfActiveCategoryInLastMonth + weightsOfCategoryConcentration))
 
   /** 获取市场得分 **/
   private def getMarketScore(offlineShoppingDistrictIndexGPA: Double) = finalScore(offlineShoppingDistrictIndexGPA)
 
   /**
    * 总评分
-   * @param allGPA Tuple10(scoreOfPayMoneyAnnAvgGPA, scoreOfPerCigarAvgPriceOfAnnAvgGPA, weightsOfsalesRentRatioGPA, weightsOfgrossMarginLastYearGPA, monthlySalesGrowthRatioGPA, orderAmountAnnAvgGPA, monthsNumsFromEarliestOrderGPA, activeCategoryInLastMonthGPA, categoryConcentrationGPA, offlineShoppingDistrictIndexGPA)
+   * @param allGPA Tuple10(scoreOfPayMoneyAnnAvgGPA, orderAmountAnnAvgGPA, weightsOfSalesRentRatioGPA, weightsOfGrossMarginLastYearGPA, monthlySalesGrowthRatioGPA, scoreOfPerCigarAvgPriceOfAnnAvgGPA, monthsNumFromEarliestOrderGPA, activeCategoryInLastMonthGPA, categoryConcentrationGPA, offlineShoppingDistrictIndexGPA)
    */
   private def getTotalScore(allGPA: Tuple10[Double, Double, Double, Double, Double, Double, Double, Double, Double, Double]) = {
-    finalScore(weightsOfPayMoneyAnnAvg * allGPA._1 + weightsOfPerCigarAvgPriceOfAnnAvg * allGPA._2 + weightsOfSalesRentRatio * allGPA._3 + weightsOfGrossMarginLastYear * allGPA._4 + weightsOfMonthlySalesGrowthRatio * allGPA._5 + weightsOfOrderAmountAnnAvg * allGPA._6 + weightsOfMonthsNumsFromEarliestOrder * allGPA._7 + weightsOfActiveCategoryInLastMonth * allGPA._8 + weightsOfCategoryConcentration * allGPA._9 + weightsOfOfflineShoppingDistrictIndex * allGPA._10)
+    finalScore(weightsOfPayMoneyAnnAvg * allGPA._1 + weightsOfOrderAmountAnnAvg * allGPA._2 + weightsOfSalesRentRatio * allGPA._3 + weightsOfGrossMarginLastYear * allGPA._4 + weightsOfMonthlySalesGrowthRatio * allGPA._5 + weightsOfPerCigarAvgPriceOfAnnAvg * allGPA._6 + weightsOfMonthsNumsFromEarliestOrder * allGPA._7 + weightsOfActiveCategoryInLastMonth * allGPA._8 + weightsOfCategoryConcentration * allGPA._9 + weightsOfOfflineShoppingDistrictIndex * allGPA._10)
   }
 
   private def calcPayMoneyAnnAvgGPA(value: Double) = rangeOfGPA((value - 50000) / 100000)
 
-  private def calcPerCigarAvgPriceOfAnnAvgGPA(value: Double) = rangeOfGPA((value - 120) / 120)
+  private def calcOrderAmountAnnAvgGPA(value: Double) = rangeOfGPA((value - 300) / 300)
 
   private def calcSalesRentRatioGPA(value: Double) = rangeOfGPA(value / 10)
 
@@ -77,7 +77,7 @@ object ScoreService {
 
   private def calcMonthlySalesGrowthRatioGPA(value: Double) = rangeOfGPA(value / 1.25)
 
-  private def calcOrderAmountAnnAvgGPA(value: Double) = rangeOfGPA((value - 300) / 300)
+  private def calcPerCigarAvgPriceOfAnnAvgGPA(value: Double) = rangeOfGPA((value - 120) / 120)
 
   private def calcMonthsNumFromEarliestOrderGPA(value: Double) = rangeOfGPA((value - 12) / 6)
 
@@ -89,15 +89,16 @@ object ScoreService {
 
   /**
    * 获取规模相关的绩点
-   * 返回：(licenseNo,(payMoneyAnnAvgGPA,perCigarAvgPriceOfAnnAvgGPA))
-   * 中文：(许可证号  ,(   订货额年均值绩点,            每条均价年均值绩点))
+   * 返回：(licenseNo,(payMoneyAnnAvgGPA, orderAmountAnnAvgGPA))
+   * 中文：(许可证号  ,(   订货额年均值绩点,      订货条数年均值绩点))
    */
   private def getScaleGPA = {
     val payMoneyAnnAvgGPA = payMoneyAnnAvg
       .map(t => (t._1, calcPayMoneyAnnAvgGPA(t._2)))
-    val perCigarAvgPriceOfAnnAvgGPA = perCigarAvgPriceOfAnnAvg
-      .map(t => (t._1, calcPerCigarAvgPriceOfAnnAvgGPA(t._2)))
-    payMoneyAnnAvgGPA.leftOuterJoin(perCigarAvgPriceOfAnnAvgGPA).map(t => (t._1, (t._2._1, t._2._2.get)))
+
+    val orderAmountAnnAvgGPA = orderAmountAnnAvg
+      .map(t => (t._1, calcOrderAmountAnnAvgGPA(t._2)))
+    payMoneyAnnAvgGPA.leftOuterJoin(orderAmountAnnAvgGPA).map(t => (t._1, (t._2._1, t._2._2.get)))
   }
 
   /**
@@ -126,19 +127,19 @@ object ScoreService {
 
   /**
    * 获取运营相关的绩点
-   * 返回：(licenseNo, (orderAmountAnnAvgGPA,monthsNumsFromEarliestOrderGPA,activeCategoryInLastMonthGPA,categoryConcentrationGPA))
-   * 中文：(许可证号  , (    订货条数年均值绩点,                    经营期限绩点,                  活跃品类绩点,            品类集中度绩点))
+   * 返回：(licenseNo, (perCigarAvgPriceOfAnnAvgGPA, monthsNumsFromEarliestOrderGPA,activeCategoryInLastMonthGPA,categoryConcentrationGPA))
+   * 中文：(许可证号  , (           每条均价年均值绩点 ,                    经营期限绩点,                  活跃品类绩点,            品类集中度绩点))
    */
   private def getOperationGPA = {
-    val orderAmountAnnAvgGPA = orderAmountAnnAvg
-      .map(t => (t._1, calcOrderAmountAnnAvgGPA(t._2)))
+    val perCigarAvgPriceOfAnnAvgGPA = perCigarAvgPriceOfAnnAvg
+      .map(t => (t._1, calcPerCigarAvgPriceOfAnnAvgGPA(t._2)))
     val monthsNumFromEarliestOrderGPA = monthsNumFromEarliestOrder
       .map(t => (t._1, calcMonthsNumFromEarliestOrderGPA(t._2)))
     val activeCategoryInLastMonthGPA = getActiveCategoryInLastMonth
       .map(t => (t._1, calcActiveCategoryInLastMonthGPA(t._2)))
     val categoryConcentrationGPA = categoryConcentration
       .map(t => (t._1, calcCategoryConcentrationGPA(t._2)))
-    val tempOperationsGPA1 = orderAmountAnnAvgGPA.leftOuterJoin(monthsNumFromEarliestOrderGPA).map(t => (t._1, (t._2._1, t._2._2.get)))
+    val tempOperationsGPA1 = perCigarAvgPriceOfAnnAvgGPA.leftOuterJoin(monthsNumFromEarliestOrderGPA).map(t => (t._1, (t._2._1, t._2._2.get)))
     val tempOperationsGPA2 = activeCategoryInLastMonthGPA.leftOuterJoin(categoryConcentrationGPA).map(t => (t._1, (t._2._1, t._2._2.get)))
     tempOperationsGPA1.leftOuterJoin(tempOperationsGPA2).map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._2.get._1, t._2._2.get._2)))
   }

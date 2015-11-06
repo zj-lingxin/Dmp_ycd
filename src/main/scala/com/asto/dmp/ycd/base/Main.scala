@@ -1,38 +1,36 @@
 package com.asto.dmp.ycd.base
 
 import com.asto.dmp.ycd.service._
-import com.asto.dmp.ycd.util.Utils
+import com.asto.dmp.ycd.util.{DateUtils, Utils}
 import org.apache.spark.Logging
 
 object Main extends Logging {
+  private def setLicenseNoAndTimestamp(licenseNo: String, timestamp: Long) {
+    Constants.App.LICENSE_NO = licenseNo
+    Constants.App.TIMESTAMP = timestamp
+    Constants.App.TODAY = DateUtils.timestapToStr(timestamp, "yyyyMM/dd")
+  }
+
+  private def runAllServices {
+    new DataPrepareService().run()
+    new FieldsCalculationService().run()
+    new ScoreService().run()
+    new CreditService().run()
+  }
+
   def main(args: Array[String]) {
     val startTime = System.currentTimeMillis()
-    if (Option(args).isEmpty || args.length == 0) {
-      logError(Utils.wrapLog("请传入模型编号：1~5"))
+    if (Option(args).isEmpty || args.length < 2) {
+      logError(Utils.wrapLog("请传入程序参数: 许可证号、 时间戳"))
       return
     }
-    args(0) match {
-      case "1" =>
-        new DataPrepareService().run()
-      case "2" =>
-        new FieldsCalculationService().run()
-      case "3" =>
-        new ScoreService().run()
-      case "4" =>
-        new CreditService().run()
-      case "5" =>
-        //所有模型一起运行
-        logInfo(Utils.wrapLog("所有模型一起运行"))
-        new DataPrepareService().run()
-        new FieldsCalculationService().run()
-        new ScoreService().run()
-        new CreditService().run()
-      case _ =>
-        logError(s"传入参数错误!传入的是${args(0)},请传入1~5")
-    }
+
+    setLicenseNoAndTimestamp(args(0), args(1).toLong)
+
+    runAllServices
 
     Contexts.stopSparkContext()
-    val endTime = System.currentTimeMillis()
-    logInfo(s"程序共运行${(endTime - startTime) / 1000}秒")
+
+    logInfo(s"程序共运行${(System.currentTimeMillis() - startTime) / 1000}秒")
   }
 }

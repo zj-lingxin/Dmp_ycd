@@ -33,7 +33,6 @@ object CreditService {
 }
 
 class CreditService extends DataSource {
-
   def run(): Unit = {
     try {
       logInfo(Utils.wrapLog("开始运行授信模型"))

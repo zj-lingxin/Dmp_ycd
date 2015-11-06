@@ -1,7 +1,5 @@
 package com.asto.dmp.ycd.base
 
-import com.asto.dmp.ycd.util.DateUtils
-
 object Constants {
 
   /** App中的常量与每个项目相关 **/
@@ -12,7 +10,9 @@ object Constants {
     val LOG_WRAPPER = "##########"
     val YEAR_MONTH_DAY_FORMAT = "yyyy-MM-dd"
     val YEAR_MONTH_FORMAT = "yyyy-MM"
-    val TODAY = DateUtils.getStrDate("yyyyMM/dd")
+    var TODAY: String = _
+    var LICENSE_NO: String = _
+    var TIMESTAMP: Long = _
   }
 
   /** 输入文件路径 **/
@@ -29,15 +29,14 @@ object Constants {
   /** 输出文件路径 **/
   object OutputPath {
     val SEPARATOR = "\t"
-    private val DIR = s"${App.HADOOP_DIR}/output"
-
-    val CREDIT = s"$DIR/text/${App.TODAY}/credit"
-    val SCORE = s"$DIR/text/${App.TODAY}/score"
-    val GPA = s"$DIR/text/${App.TODAY}/GPA"
-    val FIELD = s"$DIR/text/${App.TODAY}/field"
-    val ACTIVE_CATEGORY = s"$DIR/text/${App.TODAY}/activeCategory"
-    val GROSS_MARGIN_PER_MONTH_CATEGORY = s"$DIR/text/${App.TODAY}/grossMarginPerMonthCategory"
-    val GROSS_MARGIN_PER_MONTH_ALL = s"$DIR/text/${App.TODAY}/grossMarginPerMonthAll"
+    private val DIR = s"${App.HADOOP_DIR}/output/online/${App.TODAY}/${App.LICENSE_NO}-${App.TIMESTAMP}"
+    val CREDIT = s"$DIR/credit"
+    val SCORE = s"$DIR/score"
+    val GPA = s"$DIR/GPA"
+    val FIELD = s"$DIR/field"
+    val ACTIVE_CATEGORY = s"$DIR/activeCategory"
+    val GROSS_MARGIN_PER_MONTH_CATEGORY = s"$DIR/grossMarginPerMonthCategory"
+    val GROSS_MARGIN_PER_MONTH_ALL = s"$DIR/grossMarginPerMonthAll"
   }
 
   /** 表的模式 **/
