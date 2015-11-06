@@ -1,6 +1,6 @@
 package com.asto.dmp.ycd.base
 
-import com.asto.dmp.ycd.service.{FieldsCalculationService, CreditService, DataPrepareService, ScoreService}
+import com.asto.dmp.ycd.service._
 import com.asto.dmp.ycd.util.{DateUtils, Utils}
 import org.apache.spark.Logging
 

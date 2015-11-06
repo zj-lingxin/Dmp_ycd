@@ -24,6 +24,10 @@ object CreditService {
     else 1.5
   }
 
+  /**
+   * 授信额度结果
+   * 许可证号	，近12月月均提货额	，评分，评分对应系数，授信额度
+   */
   def getAmountOfCredit = {
     BizDao.payMoneyAnnAvg
       .leftOuterJoin(ScoreService.getAllScore.map(t => (t._1, t._7)))

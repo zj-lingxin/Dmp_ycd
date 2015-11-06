@@ -256,5 +256,4 @@ object BizDao extends Dao {
       .map(a => (a(0).toString, (a(1), a(2), a(3), a(4), a(5), a(6), a(7), a(8))))
     tobaccoPriceRDD.leftOuterJoin(orderDetailsRDD).filter(_._2._2.isDefined).map(t => (t._2._2.get._1, t._2._2.get._2, t._2._2.get._3, t._2._2.get._4,t._1,t._2._2.get._5,t._2._2.get._6,t._2._2.get._7,t._2._2.get._8,t._2._1._1,t._2._1._2,t._2._1._3))
   }
-
 }
