@@ -82,7 +82,7 @@ object BizDao extends Dao {
   def getActiveCategoryInLast12Months = {
     val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()
     licenseNoArray.foreach(list ++= getActiveCategoryInLast12MonthsFor(_))
-    Contexts.getSparkContext.parallelize(list)
+    Contexts.sparkContext.parallelize(list)
   }
 
   private def getActiveCategoryInLast12MonthsFor(licenseNo: String) = {
@@ -132,7 +132,7 @@ object BizDao extends Dao {
       .collect()
       .sortWith((a,b) => a._1.toString() > b._1.toString())
       .map(t => (t._1._1, t._1._2, t._2, t._1._3))
-    Contexts.getSparkContext.parallelize(array)
+    Contexts.sparkContext.parallelize(array)
   }
 
   /**
@@ -148,7 +148,7 @@ object BizDao extends Dao {
       .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
       .map(t => (t._1._1, t._1._2, Utils.retainDecimal(1 - t._2._1 / t._2._2, 3))) //((33010220120807247A,2015-01),0.18)
       .collect().sortWith((a,b) => a.toString() > b.toString())
-    Contexts.getSparkContext.parallelize(array)
+    Contexts.sparkContext.parallelize(array)
   }
 
   /**
@@ -191,7 +191,7 @@ object BizDao extends Dao {
    * 品类集中度：近12月销售额最高的前10名的销售额占总销售额的比重，TOP10商品的销售额之和/总销售额（近12月）
    */
   def categoryConcentration = {
-    Contexts.getSparkContext
+    Contexts.sparkContext
       .parallelize(getTop10CategoryForEachLicenseNo)
       .leftOuterJoin(getLast12MonthsSales)
       .map(t => (t._1, t._2._1._1 / t._2._2.get))
@@ -237,7 +237,7 @@ object BizDao extends Dao {
    * 暂时缺失数据，默认为0.6
    */
   def salesRentRatio = {
-    Contexts.getSparkContext.parallelize(licenseNoArray).map((_,0.6)).persist()
+    Contexts.sparkContext.parallelize(licenseNoArray).map((_,0.6)).persist()
   }
 
   /**
@@ -245,7 +245,7 @@ object BizDao extends Dao {
    * 暂时缺失数据，默认为0.8
    */
   def offlineShoppingDistrictIndex = {
-    Contexts.getSparkContext.parallelize(licenseNoArray).map((_,0.8D)).persist()
+    Contexts.sparkContext.parallelize(licenseNoArray).map((_,0.8D)).persist()
   }
 
   def fullFieldsOrder() = {

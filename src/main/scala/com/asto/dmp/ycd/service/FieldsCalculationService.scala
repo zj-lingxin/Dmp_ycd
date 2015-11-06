@@ -35,8 +35,7 @@ object FieldsCalculationService {
 }
 
 class FieldsCalculationService extends Service {
-
-  override protected def runServices: Unit = {
+  override protected def runServices(): Unit = {
     FileUtils.saveAsTextFile(BizDao.grossMarginPerMonthCategory, Constants.OutputPath.GROSS_MARGIN_PER_MONTH_CATEGORY)
     FileUtils.saveAsTextFile(BizDao.grossMarginPerMonthAll, Constants.OutputPath.GROSS_MARGIN_PER_MONTH_ALL)
     FileUtils.saveAsTextFile(BizDao.getActiveCategoryInLast12Months, Constants.OutputPath.ACTIVE_CATEGORY)

@@ -6,6 +6,6 @@ import com.asto.dmp.ycd.util.FileUtils
 
 class DataPrepareService extends Service{
 
-  override protected def runServices: Unit = FileUtils.saveAsTextFile(BizDao.fullFieldsOrder(), Constants.InputPath.FULL_FIELDS_ORDER)
+  override protected def runServices(): Unit = FileUtils.saveAsTextFile(BizDao.fullFieldsOrder(), Constants.InputPath.FULL_FIELDS_ORDER)
 
 }

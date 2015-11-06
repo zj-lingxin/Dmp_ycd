@@ -5,28 +5,28 @@ import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.{Logging, SparkConf, SparkContext}
 
-object Contexts extends Logging with scala.Serializable {
+object Contexts extends Logging {
   private var _sc: SparkContext = _
   private var _hiveContext: HiveContext = _
   private var _sqlContext: SQLContext = _
 
-  def getHiveContext: HiveContext = {
+  def hiveContext: HiveContext = {
     if (_hiveContext == null) {
       logInfo(Utils.wrapLog("对HiveContext进行实例化"))
-      _hiveContext = new HiveContext(getSparkContext)
+      _hiveContext = new HiveContext(sparkContext)
     }
     _hiveContext
   }
 
-  def getSqlContext: SQLContext = {
+  def sqlContext: SQLContext = {
     if (_sqlContext == null) {
       logInfo(Utils.wrapLog("对SQLContext进行实例化"))
-      _sqlContext = new SQLContext(getSparkContext)
+      _sqlContext = new SQLContext(sparkContext)
     }
     _sqlContext
   }
 
-  def getSparkContext: SparkContext = {
+  def sparkContext: SparkContext = {
     if (_sc == null) {
       logInfo(Utils.wrapLog("对SparkContext进行实例化"))
       _sc = initSparkContext()

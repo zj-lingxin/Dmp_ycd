@@ -200,7 +200,7 @@ object ScoreService {
  * 评分规则
  */
 class ScoreService extends Service {
-  override def runServices =  {
+  override def runServices() =  {
     FileUtils.saveAsTextFile(getResultGPA, Constants.OutputPath.GPA)
     FileUtils.saveAsTextFile(getAllScore, Constants.OutputPath.SCORE)
   }

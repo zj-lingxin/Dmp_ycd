@@ -12,9 +12,9 @@ object Main extends Logging {
 
     licenseNoAndTimeAssignment(args)
 
-    runAllServices
+    runAllServices()
 
-    stopSparkContext
+    stopSparkContext()
 
     printRunningTime(startTime)
   }
@@ -25,20 +25,20 @@ object Main extends Logging {
     Constants.App.TODAY = DateUtils.timestampToStr(args(1).toLong, "yyyyMM/dd")
   }
 
-  private def runAllServices {
+  private def runAllServices() {
     new DataPrepareService().run()
     new FieldsCalculationService().run()
     new ScoreService().run()
     new CreditService().run()
   }
 
-  private def stopSparkContext = {
+  private def stopSparkContext() = {
     Contexts.stopSparkContext()
   }
 
   private def argsIsIllegal(args: Array[String]) = {
-    if (Option(args).isEmpty || args.length < 2) {
-      logError(Utils.wrapLog("请传入程序参数: 许可证号、 时间戳"))
+    if (Option(args).isEmpty || args.length != 2) {
+      logError(Utils.wrapLog("请传入程序参数: 许可证号[args(0)]、 时间戳[args(1)]"))
       true
     } else {
       false
