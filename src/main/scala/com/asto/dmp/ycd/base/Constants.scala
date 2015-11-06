@@ -66,5 +66,6 @@ object Constants {
     val FIELDS_CALCULATION_SUBJECT = s"${App.CHINESE_NAME}-字段计算的结果写入失败，请尽快查明原因！"
     val CREDIT_SUBJECT = s"${App.CHINESE_NAME}-授信规则结果集写入失败，请尽快查明原因！"
     val DATA_PREPARE_SUBJECT = s"${App.CHINESE_NAME}-数据准备结果集写入失败，请尽快查明原因！"
+    val DEFAULT_SUBJECT = s"${Constants.App.CHINESE_NAME}出现异常"
   }
 }

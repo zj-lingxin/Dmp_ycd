@@ -1,9 +1,8 @@
 package com.asto.dmp.ycd.service
 
-import com.asto.dmp.ycd.base.{Constants, DataSource}
+import com.asto.dmp.ycd.base.Constants
 import com.asto.dmp.ycd.dao.BizDao._
 import com.asto.dmp.ycd.service.ScoreService._
-import com.asto.dmp.ycd.util.mail.MailAgent
 import com.asto.dmp.ycd.util.{FileUtils, Utils}
 
 object ScoreService {
@@ -196,20 +195,17 @@ object ScoreService {
 /**
  * 评分规则
  */
-class ScoreService extends DataSource {
+class ScoreService extends Services {
 
-  def run() {
-    try {
-      logInfo(Utils.wrapLog("开始运行评分模型"))
-      FileUtils.saveAsTextFile(getResultGPA, Constants.OutputPath.GPA)
-      FileUtils.saveAsTextFile(getAllScore, Constants.OutputPath.SCORE)
-    } catch {
-      case t: Throwable =>
-        MailAgent(t, Constants.Mail.SCORE_SUBJECT).sendMessage()
-        logError(Constants.Mail.SCORE_SUBJECT, t)
-    } finally {
-      logInfo(Utils.wrapLog("评分模型运行结束"))
-    }
+  override var startLog: String = "开始运行评分模型"
+
+  override var endLog: String = "评分模型运行结束"
+
+  override var mailSubject: String = Constants.Mail.SCORE_SUBJECT
+
+  override def runServices =  {
+    FileUtils.saveAsTextFile(getResultGPA, Constants.OutputPath.GPA)
+    FileUtils.saveAsTextFile(getAllScore, Constants.OutputPath.SCORE)
   }
 }
 

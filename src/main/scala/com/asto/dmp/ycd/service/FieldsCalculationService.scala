@@ -1,9 +1,8 @@
 package com.asto.dmp.ycd.service
 
-import com.asto.dmp.ycd.base.{DataSource, Constants}
+import com.asto.dmp.ycd.base.Constants
 import com.asto.dmp.ycd.dao.BizDao
-import com.asto.dmp.ycd.util.mail.MailAgent
-import com.asto.dmp.ycd.util.{FileUtils, Utils}
+import com.asto.dmp.ycd.util.FileUtils
 
 object FieldsCalculationService {
   /**
@@ -35,20 +34,18 @@ object FieldsCalculationService {
   }
 }
 
-class FieldsCalculationService extends DataSource {
-  def run() {
-    try {
-      logInfo(Utils.wrapLog("开始计算字段"))
-      FileUtils.saveAsTextFile(BizDao.grossMarginPerMonthCategory, Constants.OutputPath.GROSS_MARGIN_PER_MONTH_CATEGORY)
-      FileUtils.saveAsTextFile(BizDao.grossMarginPerMonthAll, Constants.OutputPath.GROSS_MARGIN_PER_MONTH_ALL)
-      FileUtils.saveAsTextFile(BizDao.getActiveCategoryInLast12Months, Constants.OutputPath.ACTIVE_CATEGORY)
-      FileUtils.saveAsTextFile(FieldsCalculationService.getCalcFields, Constants.OutputPath.FIELD)
-    } catch {
-      case t: Throwable =>
-        MailAgent(t, Constants.Mail.CREDIT_SUBJECT).sendMessage()
-        logError(Constants.Mail.CREDIT_SUBJECT, t)
-    } finally {
-      logInfo(Utils.wrapLog("计算字段结束"))
-    }
+class FieldsCalculationService extends Services {
+
+  override protected var startLog: String = "开始计算字段"
+
+  override protected var endLog: String = "计算字段结束"
+
+  override protected var mailSubject: String = Constants.Mail.CREDIT_SUBJECT
+
+  override protected def runServices: Unit = {
+    FileUtils.saveAsTextFile(BizDao.grossMarginPerMonthCategory, Constants.OutputPath.GROSS_MARGIN_PER_MONTH_CATEGORY)
+    FileUtils.saveAsTextFile(BizDao.grossMarginPerMonthAll, Constants.OutputPath.GROSS_MARGIN_PER_MONTH_ALL)
+    FileUtils.saveAsTextFile(BizDao.getActiveCategoryInLast12Months, Constants.OutputPath.ACTIVE_CATEGORY)
+    FileUtils.saveAsTextFile(FieldsCalculationService.getCalcFields, Constants.OutputPath.FIELD)
   }
 }

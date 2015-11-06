@@ -6,10 +6,10 @@ import org.apache.spark.Logging
 
 object Main extends Logging {
 
-  private def setLicenseNoAndTimestamp(licenseNo: String, timestamp: Long) {
-    Constants.App.LICENSE_NO = licenseNo
-    Constants.App.TIMESTAMP = timestamp
-    Constants.App.TODAY = DateUtils.timestampToStr(timestamp, "yyyyMM/dd")
+  private def licenseNoAndTimeAssignment(args: Array[String]) {
+    Constants.App.LICENSE_NO = args(0)
+    Constants.App.TIMESTAMP = args(1).toLong
+    Constants.App.TODAY = DateUtils.timestampToStr(args(1).toLong, "yyyyMM/dd")
   }
 
   private def runAllServices {
@@ -32,17 +32,21 @@ object Main extends Logging {
     }
   }
 
+  private def printRunningTime(startTime: Long) {
+    logInfo(s"程序共运行${(System.currentTimeMillis() - startTime) / 1000}秒")
+  }
+
   def main(args: Array[String]) {
     val startTime = System.currentTimeMillis()
 
     if(argsIsIllegal(args)) return
 
-    setLicenseNoAndTimestamp(args(0), args(1).toLong)
+    licenseNoAndTimeAssignment(args)
 
     runAllServices
 
     stopSparkContext
 
-    logInfo(s"程序共运行${(System.currentTimeMillis() - startTime) / 1000}秒")
+    printRunningTime(startTime)
   }
 }
