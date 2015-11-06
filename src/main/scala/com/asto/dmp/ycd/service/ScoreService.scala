@@ -6,35 +6,39 @@ import com.asto.dmp.ycd.service.ScoreService._
 import com.asto.dmp.ycd.util.{FileUtils, Utils}
 
 object ScoreService {
-  //规模	权重:30%	 订货额年均值	近1年月均（提货额）	0≤(X-50000)/100000≤1
-  val weightsOfPayMoneyAnnAvg = 0.3
 
-  //规模	权重:5% 订货条数年均值 平均每月订货量（条）
-  val weightsOfOrderAmountAnnAvg = 0.05
+  /** 权重 **/
+  object Weight {
+    //规模	权重:30%	 订货额年均值	近1年月均（提货额）	0≤(X-50000)/100000≤1
+    val payMoneyAnnAvg = 0.3
 
-  //盈利	权重:10%	 销售额租金比	月均提货额 除 租赁合同月均租金额  	0≤X/10≤1
-  val weightsOfSalesRentRatio = 0.1
+    //规模	权重:5% 订货条数年均值 平均每月订货量（条）
+    val orderAmountAnnAvg = 0.05
 
-  //盈利 权重:10%	 毛利率	1年毛利率	 0≤(X-14%)/3%≤1
-  val weightsOfGrossMarginLastYear = 0.1
+    //盈利	权重:10%	 销售额租金比	月均提货额 除 租赁合同月均租金额  	0≤X/10≤1
+    val salesRentRatio = 0.1
 
-  //成长	权重:20%	月销售增长比	近3月平均销售/近6月平均销售
-  val weightsOfMonthlySalesGrowthRatio = 0.2
+    //盈利 权重:10%	 毛利率	1年毛利率	 0≤(X-14%)/3%≤1
+    val grossMarginLastYear = 0.1
 
-  //运营 权重:5%	每条均价年均值	客单价（每条进货均价）0≤(X-120)/120≤1
-  val weightsOfPerCigarAvgPriceOfAnnAvg = 0.05
+    //成长	权重:20%	月销售增长比	近3月平均销售/近6月平均销售
+    val monthlySalesGrowthRatio = 0.2
 
-  //运营	权重:5%	经营期限（月）申报月起经营月份数 减 最早一笔网上订单的月份
-  val weightsOfMonthsNumsFromEarliestOrder = 0.05
+    //运营 权重:5%	每条均价年均值	客单价（每条进货均价）0≤(X-120)/120≤1
+    val perCigarAvgPriceOfAnnAvg = 0.05
 
-  //运营	权重:5%	活跃品类最近一个月的值才参与模型计算	月均活跃品类 减 基准值20种
-  val weightsOfActiveCategoryInLastMonth = 0.05
+    //运营	权重:5%	经营期限（月）申报月起经营月份数 减 最早一笔网上订单的月份
+    val monthsNumsFromEarliestOrder = 0.05
 
-  //运营	权重:5%	品类集中度	金额TOP10的金额占比
-  val weightsOfCategoryConcentration = 0.05
+    //运营	权重:5%	活跃品类最近一个月的值才参与模型计算	月均活跃品类 减 基准值20种
+    val activeCategoryInLastMonth = 0.05
 
-  //市场	权重:5%	线下商圈指数	商圈指数100%分制，默认值为80%
-  val weightsOfOfflineShoppingDistrictIndex = 0.05
+    //运营	权重:5%	品类集中度	金额TOP10的金额占比
+    val categoryConcentration = 0.05
+
+    //市场	权重:5%	线下商圈指数	商圈指数100%分制，默认值为80%
+    val offlineShoppingDistrictIndex = 0.05
+  }
 
   private def finalScore(gpa: Double) = {
     Utils.retainDecimal(gpa * 150 + 500, 0).toInt
@@ -42,28 +46,28 @@ object ScoreService {
 
   /** 获取规模得分 **/
   private def getScaleScore(payMoneyAnnAvgGPA: Double, orderAmountAnnAvgGPA: Double) =
-    finalScore((weightsOfPayMoneyAnnAvg * payMoneyAnnAvgGPA + weightsOfOrderAmountAnnAvg * orderAmountAnnAvgGPA) / (weightsOfPayMoneyAnnAvg + weightsOfOrderAmountAnnAvg))
+    finalScore((Weight.payMoneyAnnAvg * payMoneyAnnAvgGPA + Weight.orderAmountAnnAvg * orderAmountAnnAvgGPA) / (Weight.payMoneyAnnAvg + Weight.orderAmountAnnAvg))
 
   /** 获取盈利得分 **/
-  private def getProfitScore(weightsOfSalesRentRatioGPA: Double, weightsOfGrossMarginLastYearGPA: Double) =
-    finalScore((weightsOfSalesRentRatio * weightsOfSalesRentRatioGPA + weightsOfGrossMarginLastYear * weightsOfGrossMarginLastYearGPA) / (weightsOfSalesRentRatio + weightsOfGrossMarginLastYear))
+  private def getProfitScore(salesRentRatioGPA: Double, grossMarginLastYearGPA: Double) =
+    finalScore((Weight.salesRentRatio * salesRentRatioGPA + Weight.grossMarginLastYear * grossMarginLastYearGPA) / (Weight.salesRentRatio + Weight.grossMarginLastYear))
 
   /** 获取成长得分 **/
   private def getGrowingUpScore(monthlySalesGrowthRatioGPA: Double) = finalScore(monthlySalesGrowthRatioGPA)
 
   /** 获取运营得分 **/
   private def getOperationScore(perCigarAvgPriceOfAnnAvgGPA: Double, monthsNumFromEarliestOrderGPA: Double, activeCategoryInLastMonthGPA: Double, categoryConcentrationGPA: Double) =
-    finalScore((weightsOfPerCigarAvgPriceOfAnnAvg * perCigarAvgPriceOfAnnAvgGPA + weightsOfMonthsNumsFromEarliestOrder * monthsNumFromEarliestOrderGPA + weightsOfActiveCategoryInLastMonth * activeCategoryInLastMonthGPA + weightsOfCategoryConcentration * categoryConcentrationGPA) / (weightsOfPerCigarAvgPriceOfAnnAvg + weightsOfMonthsNumsFromEarliestOrder + weightsOfActiveCategoryInLastMonth + weightsOfCategoryConcentration))
+    finalScore((Weight.perCigarAvgPriceOfAnnAvg * perCigarAvgPriceOfAnnAvgGPA + Weight.monthsNumsFromEarliestOrder * monthsNumFromEarliestOrderGPA + Weight.activeCategoryInLastMonth * activeCategoryInLastMonthGPA + Weight.categoryConcentration * categoryConcentrationGPA) / (Weight.perCigarAvgPriceOfAnnAvg + Weight.monthsNumsFromEarliestOrder + Weight.activeCategoryInLastMonth + Weight.categoryConcentration))
 
   /** 获取市场得分 **/
   private def getMarketScore(offlineShoppingDistrictIndexGPA: Double) = finalScore(offlineShoppingDistrictIndexGPA)
 
   /**
    * 总评分
-   * @param allGPA Tuple10(scoreOfPayMoneyAnnAvgGPA, orderAmountAnnAvgGPA, weightsOfSalesRentRatioGPA, weightsOfGrossMarginLastYearGPA, monthlySalesGrowthRatioGPA, scoreOfPerCigarAvgPriceOfAnnAvgGPA, monthsNumFromEarliestOrderGPA, activeCategoryInLastMonthGPA, categoryConcentrationGPA, offlineShoppingDistrictIndexGPA)
+   * @param allGPA Tuple10(scoreOfPayMoneyAnnAvgGPA, orderAmountAnnAvgGPA, salesRentRatioGPA, grossMarginLastYearGPA, monthlySalesGrowthRatioGPA, scoreOfPerCigarAvgPriceOfAnnAvgGPA, monthsNumFromEarliestOrderGPA, activeCategoryInLastMonthGPA, categoryConcentrationGPA, offlineShoppingDistrictIndexGPA)
    */
   private def getTotalScore(allGPA: Tuple10[Double, Double, Double, Double, Double, Double, Double, Double, Double, Double]) = {
-    finalScore(weightsOfPayMoneyAnnAvg * allGPA._1 + weightsOfOrderAmountAnnAvg * allGPA._2 + weightsOfSalesRentRatio * allGPA._3 + weightsOfGrossMarginLastYear * allGPA._4 + weightsOfMonthlySalesGrowthRatio * allGPA._5 + weightsOfPerCigarAvgPriceOfAnnAvg * allGPA._6 + weightsOfMonthsNumsFromEarliestOrder * allGPA._7 + weightsOfActiveCategoryInLastMonth * allGPA._8 + weightsOfCategoryConcentration * allGPA._9 + weightsOfOfflineShoppingDistrictIndex * allGPA._10)
+    finalScore(Weight.payMoneyAnnAvg * allGPA._1 + Weight.orderAmountAnnAvg * allGPA._2 + Weight.salesRentRatio * allGPA._3 + Weight.grossMarginLastYear * allGPA._4 + Weight.monthlySalesGrowthRatio * allGPA._5 + Weight.perCigarAvgPriceOfAnnAvg * allGPA._6 + Weight.monthsNumsFromEarliestOrder * allGPA._7 + Weight.activeCategoryInLastMonth * allGPA._8 + Weight.categoryConcentration * allGPA._9 + Weight.offlineShoppingDistrictIndex * allGPA._10)
   }
 
   private def calcPayMoneyAnnAvgGPA(value: Double) = rangeOfGPA((value - 50000) / 100000)
