@@ -5,7 +5,6 @@ import com.asto.dmp.ycd.dao.BizDao._
 import com.asto.dmp.ycd.service.ScoreService._
 import com.asto.dmp.ycd.util.{FileUtils, Utils}
 
-
 object ScoreService {
   //规模	权重:30%	 订货额年均值	近1年月均（提货额）	0≤(X-50000)/100000≤1
   val weightsOfPayMoneyAnnAvg = 0.3
