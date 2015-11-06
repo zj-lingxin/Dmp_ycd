@@ -6,7 +6,7 @@ import com.asto.dmp.ycd.util.{FileUtils, Utils}
 import com.asto.dmp.ycd.util.mail.MailAgent
 
 class DataPrepareService extends DataSource{
-  def run(): Unit = {
+  def run() {
     try {
       logInfo(Utils.wrapLog("开始运行 DataPrepareService run方法"))
       FileUtils.saveAsTextFile(BizDao.fullFieldsOrder(), Constants.InputPath.FULL_FIELDS_ORDER)

@@ -19,7 +19,6 @@ object Constants {
   object InputPath {
     val SEPARATOR = "\t"
     private val DIR = s"${App.HADOOP_DIR}/input"
-    val ORDER_INFO = s"$DIR/tobacco_order_info/*"
     val ORDER_DETAILS = s"$DIR/tobacco_order_details/*"
     val TOBACCO_PRICE = s"$DIR/tobacco_price/*"
     //整合了ORDER_DETAILS和TOBACCO_PRICE的信息

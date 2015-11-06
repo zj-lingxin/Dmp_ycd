@@ -65,9 +65,7 @@ object DateUtils extends scala.Serializable{
     getStrDate(cal, formatText)
   }
 
-  def timestapToStr(timestap: Long, formatText: String) = {
-    new SimpleDateFormat(formatText).format(new Date(timestap))
-  }
+  def timestampToStr(timestamp: Long, formatText: String) = new SimpleDateFormat(formatText).format(new Date(timestamp))
 
   /**
    * 截取出例如：2015-04-03、2015-4-3、2015/04/03、2015/4/3这样的字符串

@@ -33,7 +33,7 @@ object CreditService {
 }
 
 class CreditService extends DataSource {
-  def run(): Unit = {
+  def run() {
     try {
       logInfo(Utils.wrapLog("开始运行授信模型"))
       FileUtils.saveAsTextFile(getAmountOfCredit, Constants.OutputPath.CREDIT)

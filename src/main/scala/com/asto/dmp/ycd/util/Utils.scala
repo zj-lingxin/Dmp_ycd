@@ -37,9 +37,9 @@ object Utils {
   }
 
   /**
-   * 保留两位小数
+   * 保留小数位数
    */
   def retainDecimal(number: Double, bits: Int = 2): Double = {
-    BigDecimal(number).setScale(bits,BigDecimal.RoundingMode.HALF_UP).doubleValue()
+    BigDecimal(number).setScale(bits, BigDecimal.RoundingMode.HALF_UP).doubleValue()
   }
 }

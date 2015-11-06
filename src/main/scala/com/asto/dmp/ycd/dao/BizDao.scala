@@ -20,7 +20,7 @@ object BizDao extends Dao {
     BizDao.getFullFieldsOrderProps(SQL().select("license_no,order_date"))
       .map(a => (a(0).toString, a(1).toString))
       .groupByKey()
-      .map(t => (t._1, BizUtils.monthsNumsFrom(t._2.min, "yyyy-MM-dd"))).cache()
+      .map(t => (t._1, BizUtils.monthsNumFrom(t._2.min, "yyyy-MM-dd"))).cache()
   }
 
   /**

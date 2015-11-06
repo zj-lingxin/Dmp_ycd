@@ -10,20 +10,20 @@ import org.apache.spark.rdd.RDD
  * 文件相关的工具类
  */
 object FileUtils extends Logging {
-  def deleteHdfsFiles(paths: String*) = {
+  def deleteFilesInHDFS(paths: String*) = {
     paths.foreach { path =>
       val filePath = new Path(path)
-      val hdfs = filePath.getFileSystem(new Configuration())
-      if (hdfs.exists(filePath)) {
+      val HDFSFilesSystem = filePath.getFileSystem(new Configuration())
+      if (HDFSFilesSystem.exists(filePath)) {
         logInfo(Utils.wrapLog(s"删除目录：$filePath"))
-        hdfs.delete(filePath, true)
+        HDFSFilesSystem.delete(filePath, true)
       }
     }
   }
 
   def saveAsTextFile[T <: Product](rdd: RDD[T], savePath: String, deleteExistingFiles: Boolean = true) = {
     if(deleteExistingFiles)
-      deleteHdfsFiles(savePath)
+      deleteFilesInHDFS(savePath)
     rdd.map(_.productIterator.mkString(Constants.OutputPath.SEPARATOR)).coalesce(1).saveAsTextFile(savePath)
   }
 }

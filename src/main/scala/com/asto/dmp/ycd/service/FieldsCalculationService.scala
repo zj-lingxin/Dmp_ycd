@@ -36,7 +36,7 @@ object FieldsCalculationService {
 }
 
 class FieldsCalculationService extends DataSource {
-  def run(): Unit = {
+  def run() {
     try {
       logInfo(Utils.wrapLog("开始计算字段"))
       FileUtils.saveAsTextFile(BizDao.grossMarginPerMonthCategory, Constants.OutputPath.GROSS_MARGIN_PER_MONTH_CATEGORY)

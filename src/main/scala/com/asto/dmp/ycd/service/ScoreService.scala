@@ -198,7 +198,7 @@ object ScoreService {
  */
 class ScoreService extends DataSource {
 
-  def run(): Unit = {
+  def run() {
     try {
       logInfo(Utils.wrapLog("开始运行评分模型"))
       FileUtils.saveAsTextFile(getResultGPA, Constants.OutputPath.GPA)
