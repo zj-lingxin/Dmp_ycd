@@ -77,6 +77,7 @@ object BizDao extends Dao {
    * 当月月均活跃品类，为前三个月月均的订货量≥3的品类之和，如2015.10显示的活跃品类为，2015.8-2015.10三个月订货量≥9的，品类数之和；
    * 计算12个月的活跃评类数。如果不能提取到14个月的数据，则最初两个月的数据为空，均值按近十个月计算；
    * 返回：许可证号，日期，活跃品类数
+   * 注意：该方法的效率比较低，如果对系统执行时间有影响，可以对该方法进行优化。
    */
   def getActiveCategoryInLast12Months = {
     val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()
@@ -85,10 +86,10 @@ object BizDao extends Dao {
   }
 
   private def getActiveCategoryInLast12MonthsFor(licenseNo: String) = {
-    val monthsNumsFromEarliestOrderMap = monthsNumFromEarliestOrder.collect().toMap[String, Int]
-    val monthNums = Math.min(monthsNumsFromEarliestOrderMap(licenseNo), 14)
+    val monthsNumFromEarliestOrderMap = monthsNumFromEarliestOrder.collect().toMap[String, Int]
+    val monthNum = Math.min(monthsNumFromEarliestOrderMap(licenseNo), 14)
     val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()
-    (0 to 11).toStream.takeWhile(m => (m + 3) <= monthNums).foreach {
+    (0 to 11).toStream.takeWhile(m => (m + 3) <= monthNum).foreach {
       m => list += Tuple3(licenseNo, DateUtils.monthsAgo(m, "yyyy-MM"), countNumbersOfActiveCategoryForMonth(m, licenseNo))
     }
     list
@@ -132,7 +133,6 @@ object BizDao extends Dao {
       .sortWith((a,b) => a._1.toString() > b._1.toString())
       .map(t => (t._1._1, t._1._2, t._2, t._1._3))
     Contexts.getSparkContext.parallelize(array)
-    //.map(t => (t._1._1, t._1._2, t._1._3, BizUtils.retainDecimal(1 - t._2._1 / t._2._2, 3)))
   }
 
   /**
@@ -234,10 +234,10 @@ object BizDao extends Dao {
 
   /**
    * 销售额租金比
-   * 暂时缺失数据，默认为0
+   * 暂时缺失数据，默认为0.6
    */
   def salesRentRatio = {
-    Contexts.getSparkContext.parallelize(licenseNoArray).map((_,0D)).persist()
+    Contexts.getSparkContext.parallelize(licenseNoArray).map((_,0.6)).persist()
   }
 
   /**
@@ -250,10 +250,11 @@ object BizDao extends Dao {
 
   def fullFieldsOrder() = {
     val tobaccoPriceRDD = BizDao.getTobaccoPriceProps(SQL().select("cigarette_name,cigarette_brand,retail_price,manufacturers"))
-      .map(a => (a(0).toString, (a(1), a(2), a(3))))
+      .map(a => (a(0).toString, (a(1), a(2), a(3)))).distinct()
 
     val orderDetailsRDD = BizDao.getOrderDetailsProps(SQL().select("cigarette_name,city,license_no,order_id,order_date,the_cost,need_goods_amount,order_amount,pay_money"))
       .map(a => (a(0).toString, (a(1), a(2), a(3), a(4), a(5), a(6), a(7), a(8))))
     tobaccoPriceRDD.leftOuterJoin(orderDetailsRDD).filter(_._2._2.isDefined).map(t => (t._2._2.get._1, t._2._2.get._2, t._2._2.get._3, t._2._2.get._4,t._1,t._2._2.get._5,t._2._2.get._6,t._2._2.get._7,t._2._2.get._8,t._2._1._1,t._2._1._2,t._2._1._3))
   }
+
 }
