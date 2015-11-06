@@ -1,9 +1,10 @@
 package com.asto.dmp.ycd.service
 
-import com.asto.dmp.ycd.base.Constants
+import com.asto.dmp.ycd.base.{Service, Constants}
 import com.asto.dmp.ycd.dao.BizDao._
 import com.asto.dmp.ycd.service.ScoreService._
 import com.asto.dmp.ycd.util.{FileUtils, Utils}
+
 
 object ScoreService {
   //规模	权重:30%	 订货额年均值	近1年月均（提货额）	0≤(X-50000)/100000≤1
@@ -195,14 +196,7 @@ object ScoreService {
 /**
  * 评分规则
  */
-class ScoreService extends Services {
-
-  override var startLog: String = "开始运行评分模型"
-
-  override var endLog: String = "评分模型运行结束"
-
-  override var mailSubject: String = Constants.Mail.SCORE_SUBJECT
-
+class ScoreService extends Service {
   override def runServices =  {
     FileUtils.saveAsTextFile(getResultGPA, Constants.OutputPath.GPA)
     FileUtils.saveAsTextFile(getAllScore, Constants.OutputPath.SCORE)

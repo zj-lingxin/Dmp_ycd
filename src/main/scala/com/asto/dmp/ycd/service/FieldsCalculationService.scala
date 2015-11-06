@@ -1,6 +1,6 @@
 package com.asto.dmp.ycd.service
 
-import com.asto.dmp.ycd.base.Constants
+import com.asto.dmp.ycd.base.{Service, Constants}
 import com.asto.dmp.ycd.dao.BizDao
 import com.asto.dmp.ycd.util.FileUtils
 
@@ -34,13 +34,7 @@ object FieldsCalculationService {
   }
 }
 
-class FieldsCalculationService extends Services {
-
-  override protected var startLog: String = "开始计算字段"
-
-  override protected var endLog: String = "计算字段结束"
-
-  override protected var mailSubject: String = Constants.Mail.CREDIT_SUBJECT
+class FieldsCalculationService extends Service {
 
   override protected def runServices: Unit = {
     FileUtils.saveAsTextFile(BizDao.grossMarginPerMonthCategory, Constants.OutputPath.GROSS_MARGIN_PER_MONTH_CATEGORY)
@@ -48,4 +42,5 @@ class FieldsCalculationService extends Services {
     FileUtils.saveAsTextFile(BizDao.getActiveCategoryInLast12Months, Constants.OutputPath.ACTIVE_CATEGORY)
     FileUtils.saveAsTextFile(FieldsCalculationService.getCalcFields, Constants.OutputPath.FIELD)
   }
+
 }

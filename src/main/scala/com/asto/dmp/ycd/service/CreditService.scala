@@ -2,8 +2,8 @@ package com.asto.dmp.ycd.service
 
 import com.asto.dmp.ycd.base._
 import com.asto.dmp.ycd.dao.BizDao
-import com.asto.dmp.ycd.service.CreditService._
 import com.asto.dmp.ycd.util.{FileUtils, Utils}
+import CreditService._
 
 /**
  * 授信规则
@@ -31,14 +31,6 @@ object CreditService {
   }
 }
 
-class CreditService extends Services {
-
-  override protected var startLog: String = "开始运行授信模型"
-
-  override protected var endLog: String = "授信模型运行结束"
-
-  override protected var mailSubject: String = Constants.Mail.CREDIT_SUBJECT
-
+class CreditService extends Service {
   override protected def runServices: Unit = FileUtils.saveAsTextFile(getAmountOfCredit, Constants.OutputPath.CREDIT)
-
 }

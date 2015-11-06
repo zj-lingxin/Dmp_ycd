@@ -1,10 +1,23 @@
 package com.asto.dmp.ycd.base
 
-import com.asto.dmp.ycd.service._
+import com.asto.dmp.ycd.service.{FieldsCalculationService, CreditService, DataPrepareService, ScoreService}
 import com.asto.dmp.ycd.util.{DateUtils, Utils}
 import org.apache.spark.Logging
 
 object Main extends Logging {
+  def main(args: Array[String]) {
+    val startTime = System.currentTimeMillis()
+
+    if(argsIsIllegal(args)) return
+
+    licenseNoAndTimeAssignment(args)
+
+    runAllServices
+
+    stopSparkContext
+
+    printRunningTime(startTime)
+  }
 
   private def licenseNoAndTimeAssignment(args: Array[String]) {
     Constants.App.LICENSE_NO = args(0)
@@ -34,19 +47,5 @@ object Main extends Logging {
 
   private def printRunningTime(startTime: Long) {
     logInfo(s"程序共运行${(System.currentTimeMillis() - startTime) / 1000}秒")
-  }
-
-  def main(args: Array[String]) {
-    val startTime = System.currentTimeMillis()
-
-    if(argsIsIllegal(args)) return
-
-    licenseNoAndTimeAssignment(args)
-
-    runAllServices
-
-    stopSparkContext
-
-    printRunningTime(startTime)
   }
 }
