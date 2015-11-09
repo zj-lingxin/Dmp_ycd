@@ -110,7 +110,7 @@ object BizDao extends Dao {
   }
 
   private def countNumbersOfActiveCategoryForMonth(m: Int, licenseNo: String) = {
-    BizDao.getFullFieldsOrderProps(SQL().select("cigarette_name,order_date,order_amount").where(s" order_date >= '${DateUtils.monthsAgo(m + 3, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(m, "yyyy-MM-01")}' and store_id = '$licenseNo'"))
+    BizDao.getFullFieldsOrderProps(SQL().select("cigar_name,order_date,order_amount").where(s" order_date >= '${DateUtils.monthsAgo(m + 3, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(m, "yyyy-MM-01")}' and store_id = '$licenseNo'"))
       .map(a => (a(0).toString, a(2).toString.toInt))
       .groupByKey()
       .map(t => (t._1, t._2.sum))
@@ -192,14 +192,14 @@ object BizDao extends Dao {
    */
   def categoryConcentration = {
     Contexts.sparkContext
-      .parallelize(getTop10CategoryForEachLicenseNo)
+      .parallelize(getTop10Category)
       .leftOuterJoin(getLast12MonthsSales)
       .map(t => (t._1, t._2._1._1 / t._2._2.get))
       .groupByKey()
       .map(t => (t._1, Utils.retainDecimal(t._2.sum))).persist()
   }
 
-  private def getTop10CategoryForEachLicenseNo = {
+  private def getTop10Category = {
     val array = getAllCategoryConcentration
     var topIndex: Int = 0
     val list = scala.collection.mutable.ListBuffer[(String, (Double, String))]()
@@ -215,7 +215,7 @@ object BizDao extends Dao {
   }
 
   private def getAllCategoryConcentration = {
-    selectLastMonthsData("store_id,cigarette_name,order_amount,retail_price", 12)
+    selectLastMonthsData("store_id,cigar_name,order_amount,retail_price", 12)
       .map(a => (a(0).toString, a(1).toString, a(2).toString.toInt * a(3).toString.toDouble))
       .map(t => ((t._1, t._2), t._3))
       .groupByKey()
@@ -249,11 +249,12 @@ object BizDao extends Dao {
   }
 
   def fullFieldsOrder() = {
-    val tobaccoPriceRDD = BizDao.getTobaccoPriceProps(SQL().select("cigar_name,cigarette_brand,retail_price,producer_name"))
+    val tobaccoPriceRDD = BizDao.getTobaccoPriceProps(SQL().select("cigar_name,cigar_brand,retail_price,producer_name"))
       .map(a => (a(0).toString, (a(1), a(2), a(3)))).distinct()
 
-    val orderDetailsRDD = BizDao.getOrderDetailsProps(SQL().select("cigar_name,city,store_id,order_id,order_date,wholesale_price,purchase_amount,order_amount,money_amount").where(s"store_id = '${Constants.App.STORE_ID}'"))
-      .map(a => (a(0).toString, (a(1), a(2), a(3), a(4), a(5), a(6), a(7), a(8))))
-    tobaccoPriceRDD.leftOuterJoin(orderDetailsRDD).filter(_._2._2.isDefined).map(t => (t._2._2.get._1, t._2._2.get._2, t._2._2.get._3, t._2._2.get._4,t._1,t._2._2.get._5,t._2._2.get._6,t._2._2.get._7,t._2._2.get._8,t._2._1._1,t._2._1._2,t._2._1._3))
+    val orderDetailsRDD = BizDao.getOrderDetailsProps(SQL().select("cigar_name,store_id,order_id,order_date,wholesale_price,purchase_amount,order_amount,money_amount").where(s"store_id = '${Constants.App.STORE_ID}'"))
+      .map(a => (a(0).toString, (a(1), a(2), a(3), a(4), a(5), a(6), a(7))))
+    //"store_id,order_id,order_date,cigar_name,wholesale_price,purchase_amount,order_amount,money_amount,cigarette_brand,retail_price,producer_name"
+    tobaccoPriceRDD.leftOuterJoin(orderDetailsRDD).filter(_._2._2.isDefined).map(t => (t._2._2.get._1, t._2._2.get._2, t._2._2.get._3,t._1,t._2._2.get._4,t._2._2.get._5,t._2._2.get._6,t._2._2.get._7,t._2._1._1,t._2._1._2,t._2._1._3))
   }
 }
