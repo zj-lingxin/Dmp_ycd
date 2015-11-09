@@ -6,11 +6,12 @@ import org.apache.spark.Logging
 
 object Main extends Logging {
   def main(args: Array[String]) {
+
     val startTime = System.currentTimeMillis()
 
     if(argsIsIllegal(args)) return
 
-    licenseNoAndTimeAssignment(args)
+    storeIDAndTimeAssignment(args)
 
     runAllServices()
 
@@ -19,7 +20,7 @@ object Main extends Logging {
     printRunningTime(startTime)
   }
 
-  private def licenseNoAndTimeAssignment(args: Array[String]) {
+  private def storeIDAndTimeAssignment(args: Array[String]) {
     Constants.App.STORE_ID = args(0)
     Constants.App.TIMESTAMP = args(1).toLong
     Constants.App.TODAY = DateUtils.timestampToStr(args(1).toLong, "yyyyMM/dd")

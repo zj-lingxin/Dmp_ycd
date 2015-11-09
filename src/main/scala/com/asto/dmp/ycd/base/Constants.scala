@@ -6,7 +6,7 @@ object Constants {
   object App {
     val SPARK_UI_APP_NAME = "烟草贷"
     val CHINESE_NAME = "烟草贷"
-    val HADOOP_DIR = "hdfs://appcluster/ycd/"
+    val HADOOP_DIR = "hdfs://appcluster/ycd/online"
     val LOG_WRAPPER = "##########"
     val YEAR_MONTH_DAY_FORMAT = "yyyy-MM-dd"
     val YEAR_MONTH_FORMAT = "yyyy-MM"
@@ -28,7 +28,7 @@ object Constants {
   /** 输出文件路径 **/
   object OutputPath {
     val SEPARATOR = "\t"
-    private val DIR = s"${App.HADOOP_DIR}/output/online/${App.TODAY}/${App.STORE_ID}_${App.TIMESTAMP}"
+    private val DIR = s"${App.HADOOP_DIR}/output/${App.TODAY}/${App.STORE_ID}_${App.TIMESTAMP}"
     val CREDIT = s"$DIR/credit"
     val SCORE = s"$DIR/score"
     val GPA = s"$DIR/GPA"

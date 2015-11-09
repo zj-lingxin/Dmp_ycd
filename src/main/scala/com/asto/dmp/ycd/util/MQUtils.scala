@@ -7,7 +7,6 @@ import scala.util.parsing.json.{JSONArray, JSONObject}
  * Created by fengt on 2015/11/6.
  */
 object MQUtils extends scala.Serializable {
-  val target_date = DateUtils.monthsAgo(1,"yyyymm")
   val map = Map[String, Any]()
 
   /**
@@ -15,7 +14,7 @@ object MQUtils extends scala.Serializable {
    */
   def getYcdJsonObject(code_name: String, value: Any, target_date: String, indexFlag: String): JSONObject = {
     val result = map.+("indexFlag" -> indexFlag).+("quotaCode" -> code_name).+("quotaValue" -> value).+(
-      "targetTime" -> (if (target_date != null) target_date.replace("-", "") else target_date))
+      "targetTime" -> target_date)
      new JSONObject(result)
   }
 
@@ -26,11 +25,10 @@ object MQUtils extends scala.Serializable {
   /**
    * 将支付宝用户的统计指标封装后发送 到MQ
    */
-  def sendData(propertyAcc: String,propertyAccType: String, queue_name: String, list: ListBuffer[JSONObject]) {
-    val originalMap = Map("propertyAcc" -> propertyAcc)
-    val secondMap= originalMap.+("propertyAccType" -> propertyAccType)
+  def sendData(store_Id: String, queue_name: String, list: ListBuffer[JSONObject]) {
+    val originalMap = Map("store_Id" -> store_Id)
     val jsonArray = JSONArray(list.toList)
-    val resultMap = secondMap.+("quotaItemList" -> jsonArray)
+    val resultMap = originalMap.+("quotaItemList" -> jsonArray)
     val json = new JSONObject(resultMap)
     //    val sender: Send = new SendImpl
     SendImpl.send(queue_name, json.toString())
