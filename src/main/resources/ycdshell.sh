@@ -14,7 +14,6 @@ if [ ! -d $HOME/$date_cur ];then
    mkdir $HOME/$date_cur
    echo "Created dir for ycd store Id ["$store_id"]!"
  fi
-#transfer table alipay_account_trade
 echo "start!!"${store_id}" time:"${time_cur} >> $HOME/$date_cur/process.log
 hdfs dfs -rm -r /ycd/online/input/tobacco_order_details
 /data/sqoop-1.4.4/bin/sqoop import --connect jdbc:mysql://192.168.7.7:3306/retail_loan --username root --password password --query 'SELECT store_id,orderId,orderDate,cigarName,wholesalePrice,purchaseAmount,orderAmount,moneyAmount,producerName FROM  datag_yancao_historyOrderDetailData WHERE store_id = "'$store_id'" and $CONDITIONS '   -m 1  --target-dir /ycd/online/input/tobacco_order_details --fields-terminated-by '\t'
