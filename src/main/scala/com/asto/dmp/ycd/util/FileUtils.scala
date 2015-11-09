@@ -2,7 +2,6 @@ package com.asto.dmp.ycd.util
 
 import java.io.FileInputStream
 import java.util.Properties
-
 import com.asto.dmp.ycd.base.Constants
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
@@ -35,12 +34,10 @@ object FileUtils extends Logging {
   val propPath = System.getProperty("PropPath")
   val hasPropPath = if(propPath == null) false else true
   def getPropByKey(propertyKey: String): String = {
-    if(hasPropPath){
+    if (hasPropPath) {
       prop.load(new FileInputStream(propPath))
       new String(prop.getProperty(propertyKey).getBytes("ISO-8859-1"),"utf-8")
-    }
-
-    else
+    } else
       prop.getProperty(propertyKey)
   }
 }

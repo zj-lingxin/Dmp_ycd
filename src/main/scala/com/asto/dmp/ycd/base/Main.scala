@@ -20,7 +20,7 @@ object Main extends Logging {
   }
 
   private def licenseNoAndTimeAssignment(args: Array[String]) {
-    Constants.App.LICENSE_NO = args(0)
+    Constants.App.STORE_ID = args(0)
     Constants.App.TIMESTAMP = args(1).toLong
     Constants.App.TODAY = DateUtils.timestampToStr(args(1).toLong, "yyyyMM/dd")
   }
@@ -38,7 +38,7 @@ object Main extends Logging {
 
   private def argsIsIllegal(args: Array[String]) = {
     if (Option(args).isEmpty || args.length != 2) {
-      logError(Utils.wrapLog("请传入程序参数: 许可证号[args(0)]、 时间戳[args(1)]"))
+      logError(Utils.wrapLog("请传入程序参数: 店铺id[args(0)]、 时间戳[args(1)]"))
       true
     } else {
       false

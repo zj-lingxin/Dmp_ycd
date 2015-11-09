@@ -10,7 +10,7 @@ object FieldsCalculationService {
    * 返回：(licenseNo,monthsNumFromEarliestOrder,payMoneyAnnAvg,orderAmountAnnAvg,perCigarAvgPriceOfAnnAvg,
    *                  activeCategoryInLastMonth,grossMarginLastYear,monthlySalesGrowthRatio,salesRentRatio,
    *                  categoryConcentration,offlineShoppingDistrictIndex)
-   * 中文：(许可证号,经营期限（月）,订货额年均值,订货条数年均值,每条均价年均值,当前月活跃品类,近1年毛利率,月销售增长比,销售额租金比,品类集中度,线下商圈指数)
+   * 中文：(店铺id,经营期限（月）,订货额年均值,订货条数年均值,每条均价年均值,当前月活跃品类,近1年毛利率,月销售增长比,销售额租金比,品类集中度,线下商圈指数)
    */
   def getCalcFields = {
     BizDao.monthsNumFromEarliestOrder.leftOuterJoin(BizDao.payMoneyAnnAvg)
