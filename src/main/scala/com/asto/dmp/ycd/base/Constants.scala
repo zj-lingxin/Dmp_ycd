@@ -11,7 +11,7 @@ object Constants {
     val YEAR_MONTH_DAY_FORMAT = "yyyy-MM-dd"
     val YEAR_MONTH_FORMAT = "yyyy-MM"
     var TODAY: String = _
-    var LICENSE_NO: String = _
+    var STORE_ID: String = _
     var TIMESTAMP: Long = _
   }
 
@@ -28,7 +28,7 @@ object Constants {
   /** 输出文件路径 **/
   object OutputPath {
     val SEPARATOR = "\t"
-    private val DIR = s"${App.HADOOP_DIR}/output/online/${App.TODAY}/${App.LICENSE_NO}-${App.TIMESTAMP}"
+    private val DIR = s"${App.HADOOP_DIR}/output/online/${App.TODAY}/${App.STORE_ID}_${App.TIMESTAMP}"
     val CREDIT = s"$DIR/credit"
     val SCORE = s"$DIR/score"
     val GPA = s"$DIR/GPA"
@@ -40,12 +40,12 @@ object Constants {
 
   /** 表的模式 **/
   object Schema {
-    //烟草订单详情：城市,许可证号,订单号,订货日期,卷烟名称,批发价,要货量(想要多少货),订货量(厂家给的货，也就是实际拿到的货),金额,生产厂家(与TOBACCO_PRICE中的冗余)
-    val ORDER_DETAILS = "city,license_no,order_id,order_date,cigarette_name,the_cost,need_goods_amount,order_amount,pay_money,manufacturers"
+    //烟草订单详情：城市,店铺id,订单号,订货日期,卷烟名称,批发价,要货量(想要多少货),订货量(厂家给的货，也就是实际拿到的货),金额,生产厂家(与TOBACCO_PRICE中的冗余)
+    val ORDER_DETAILS = "city,store_id,order_id,order_date,cigar_name,wholesale_price,purchase_amount,order_amount,money_amount,producer_name"
     //卷烟名称,品牌系列,零售指导价(元/条),生产厂家
-    val TOBACCO_PRICE = "cigarette_name,cigarette_brand,retail_price,manufacturers"
-    //烟草订单详情：           城市,   许可证号,   订单号,   订货日期,       卷烟名称,（单条烟的）批发价|成本价,要货量(想要多少货),订货量(厂家给的货，也就是实际拿到的货),金额（要货量 * （单条烟的）批发价）,生产厂家(与TOBACCO_PRICE中的冗余)
-    val FULL_FIELDS_ORDER = "city,license_no,order_id,order_date,cigarette_name,the_cost,need_goods_amount,order_amount,pay_money,cigarette_brand,retail_price,manufacturers"
+    val TOBACCO_PRICE = "cigar_name,cigar_brand,retail_price,producer_name"
+    //烟草订单详情：           城市,   店铺id,   订单号,   订货日期,       卷烟名称,（单条烟的）批发价|成本价,要货量(想要多少货),订货量(厂家给的货，也就是实际拿到的货),金额（要货量 * （单条烟的）批发价）,生产厂家(与TOBACCO_PRICE中的冗余)
+    val FULL_FIELDS_ORDER = "city,store_id,order_id,order_date,cigar_name,wholesale_price,purchase_amount,order_amount,money_amount,cigarette_brand,retail_price,producer_name"
   }
 
   /** 邮件发送功能相关常量 **/
