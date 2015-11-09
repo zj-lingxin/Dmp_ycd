@@ -41,12 +41,8 @@ trait Dao extends Logging {
     //如果临时表未注册，就进行注册
     if (!Contexts.sqlContext.tableNames().contains(tempTableName)) {
       val fieldsNum = schema.split(",").length
-      val tmpRDD = Contexts.sparkContext.textFile(inputFilePath)
-        .map(_.split(separator)).cache()
-      tmpRDD.map(t =>(t.length,1)).countByValue()
-      logInfo(Utils.wrapLog(s"schema的字段是$fieldsNum,解析后的字段个数与行数的关系是:${tmpRDD.map(_.length).countByValue()}"))
-
-      val rowRDD = tmpRDD.filter(x => x.length == fieldsNum)
+      val rowRDD = Contexts.sparkContext.textFile(inputFilePath)
+        .map(_.split(separator)).filter(x => x.length == fieldsNum)
         .map(fields => for (field <- fields) yield field.trim)
         .map(fields => Row(fields: _*))
       Contexts.sqlContext.createDataFrame(rowRDD, simpleSchema(schema)).registerTempTable(tempTableName)

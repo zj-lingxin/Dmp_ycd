@@ -26,7 +26,7 @@ object CreditService {
 
   /**
    * 授信额度结果
-   * 店铺id	，近12月月均提货额	，评分，评分对应系数，授信额度
+   * 许可证号	，近12月月均提货额	，评分，评分对应系数，授信额度
    */
   def getAmountOfCredit = {
     BizDao.payMoneyAnnAvg

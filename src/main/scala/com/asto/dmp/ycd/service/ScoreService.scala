@@ -93,7 +93,7 @@ object ScoreService {
   /**
    * 获取规模相关的绩点
    * 返回：(licenseNo,(payMoneyAnnAvgGPA, orderAmountAnnAvgGPA))
-   * 中文：(店铺id  ,(   订货额年均值绩点,      订货条数年均值绩点))
+   * 中文：(许可证号  ,(   订货额年均值绩点,      订货条数年均值绩点))
    */
   private def getScaleGPA = {
     val payMoneyAnnAvgGPA = payMoneyAnnAvg
@@ -107,7 +107,7 @@ object ScoreService {
   /**
    * 获取盈利相关的绩点
    * 返回：(licenseNo,(salesRentRatioGPA,grossMarginLastYearGPA))
-   * 中文：(店铺id  ,(   销售额租金比绩点,           1年毛利率绩点))
+   * 中文：(许可证号  ,(   销售额租金比绩点,           1年毛利率绩点))
    */
   private def getProfitGPA = {
     val salesRentRatioGPA = salesRentRatio
@@ -120,7 +120,7 @@ object ScoreService {
   /**
    * 获取成长相关的绩点
    * 返回：(licenseNo, monthlySalesGrowthRatioGPA)
-   * 中文：(店铺id  ,             月销售增长比绩点)
+   * 中文：(许可证号  ,             月销售增长比绩点)
    */
   private def getGrowingUpGPA = {
     val monthlySalesGrowthRatioGPA = monthlySalesGrowthRatio
@@ -131,7 +131,7 @@ object ScoreService {
   /**
    * 获取运营相关的绩点
    * 返回：(licenseNo, (perCigarAvgPriceOfAnnAvgGPA, monthsNumsFromEarliestOrderGPA,activeCategoryInLastMonthGPA,categoryConcentrationGPA))
-   * 中文：(店铺id  , (           每条均价年均值绩点 ,                    经营期限绩点,                  活跃品类绩点,            品类集中度绩点))
+   * 中文：(许可证号  , (           每条均价年均值绩点 ,                    经营期限绩点,                  活跃品类绩点,            品类集中度绩点))
    */
   private def getOperationGPA = {
     val perCigarAvgPriceOfAnnAvgGPA = perCigarAvgPriceOfAnnAvg
@@ -150,7 +150,7 @@ object ScoreService {
   /**
    * 获取市场相关的绩点
    * 返回：(licenseNo, offlineShoppingDistrictIndexGPA)
-   * 中文：(店铺id  ,                      线下商圈指数)
+   * 中文：(许可证号  ,                      线下商圈指数)
    */
   private def getMarketGPA = {
     val offlineShoppingDistrictIndexGPA = offlineShoppingDistrictIndex
@@ -163,7 +163,7 @@ object ScoreService {
    * 返回：(licenseNo,(payMoneyAnnAvgGPA,perCigarAvgPriceOfAnnAvgGPA,salesRentRatioGPA,grossMarginLastYearGPA,
    * monthlySalesGrowthRatioGPA,orderAmountAnnAvgGPA,monthsNumsFromEarliestOrderGPA,
    * activeCategoryInLastMonthGPA,categoryConcentrationGPA,offlineShoppingDistrictIndexGPA))
-   * 中文：(店铺id  ,( 订货额年均值绩点,每条均价年均值绩点,销售额租金比绩点,1年毛利率绩点,月销售增长比绩点,订货条数年均值绩点,经营期限绩点,活跃品类绩点,品类集中度绩点,线下商圈指数))
+   * 中文：(许可证号  ,( 订货额年均值绩点,每条均价年均值绩点,销售额租金比绩点,1年毛利率绩点,月销售增长比绩点,订货条数年均值绩点,经营期限绩点,活跃品类绩点,品类集中度绩点,线下商圈指数))
    */
   private def getAllGPA = {
     getScaleGPA.leftOuterJoin(getProfitGPA) //(33010120120716288A,((0.56734,0.49166666666666664),Some((0.0,0.5999999999999996))))
@@ -178,12 +178,12 @@ object ScoreService {
 
   /**
    * getAllGPA这个RDD调整后的格式，用于输出到文件的格式
-   * 输出：店铺id，订货额年均值绩点，每条均价年均值绩点，	销售额租金比绩点，1年毛利率绩点，月销售增长比绩点，订货条数年均值绩点，	经营期限绩点，活跃品类绩点，品类集中度绩点，线下商圈指数
+   * 输出：许可证号，订货额年均值绩点，每条均价年均值绩点，	销售额租金比绩点，1年毛利率绩点，月销售增长比绩点，订货条数年均值绩点，	经营期限绩点，活跃品类绩点，品类集中度绩点，线下商圈指数
    */
   def getResultGPA = getAllGPA.map(t => (t._1, t._2._1, t._2._2, t._2._3, t._2._4, t._2._5, t._2._6, t._2._7, t._2._8, t._2._9, t._2._10))
 
   /**
-   * 输出：店铺id，规模得分	，盈利得分，成长得分，运营得分	，市场得分，总得分
+   * 输出：许可证号，规模得分	，盈利得分，成长得分，运营得分	，市场得分，总得分
    */
   def getAllScore = {
     getAllGPA.map(t => (t._1, getScaleScore(t._2._1, t._2._2), getProfitScore(t._2._3, t._2._4), getGrowingUpScore(t._2._5), getOperationScore(t._2._6, t._2._7, t._2._8, t._2._9), getMarketScore(t._2._10), getTotalScore(t._2))).cache()
