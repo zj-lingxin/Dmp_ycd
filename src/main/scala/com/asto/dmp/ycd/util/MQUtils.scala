@@ -1,5 +1,8 @@
 package com.asto.dmp.ycd.util
 
+import java.io.FileInputStream
+import java.util.Properties
+
 import com.asto.dmp.ycd.mq.SendImpl
 import scala.collection.mutable.ListBuffer
 import scala.util.parsing.json.{JSONArray, JSONObject}
@@ -7,6 +10,19 @@ import scala.util.parsing.json.{JSONArray, JSONObject}
  * Created by fengt on 2015/11/6.
  */
 object MQUtils extends scala.Serializable {
+  //MQ相关方法
+  val prop = new Properties()
+  val propPath = System.getProperty("PropPath")
+  val hasPropPath = Option(propPath).isDefined
+  def getPropByKey(propertyKey: String): String = {
+    if (hasPropPath) {
+      prop.load(new FileInputStream(propPath))
+      new String(prop.getProperty(propertyKey).getBytes("ISO-8859-1"), "utf-8")
+    } else
+      prop.getProperty(propertyKey)
+  }
+
+  
   val map = Map[String, Any]()
 
   /**

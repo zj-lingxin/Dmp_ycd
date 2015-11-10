@@ -11,7 +11,7 @@ object Mail {
   使用System.getProperty("PropPath")就能获取路径：/home/hadoop/prop.properties
    */
   private val propPath = System.getProperty("PropPath")
-  private val hasPropPath = if (Option(propPath).isDefined) true else false
+  private val hasPropPath = Option(propPath).isDefined
 
   //如果spark-submit中指定了prop.properties文件的路径，那么使用prop.properties中的属性，否则使用该类中定义的属性
   if (hasPropPath) {

@@ -1,6 +1,6 @@
 package com.asto.dmp.ycd.mq;
 
-import com.asto.dmp.ycd.util.FileUtils;
+import com.asto.dmp.ycd.util.MQUtils;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -49,10 +49,10 @@ public class Conf {
 	public void Connect() throws IOException, TimeoutException {
 		//Map<String, String> map = GetAllProperties();
 		factory = new ConnectionFactory();
-		factory.setHost(FileUtils.getPropByKey("rabbit_mq_host"));
-		factory.setPort(Integer.valueOf(FileUtils.getPropByKey("rabbit_mq_port")));
-		factory.setUsername(FileUtils.getPropByKey("rabbit_mq_username"));
-		factory.setPassword(FileUtils.getPropByKey("rabbit_mq_password"));
+		factory.setHost(MQUtils.getPropByKey("rabbit_mq_host"));
+		factory.setPort(Integer.valueOf(MQUtils.getPropByKey("rabbit_mq_port")));
+		factory.setUsername(MQUtils.getPropByKey("rabbit_mq_username"));
+		factory.setPassword(MQUtils.getPropByKey("rabbit_mq_password"));
 		connection = factory.newConnection();
 		channel = connection.createChannel();
 	}

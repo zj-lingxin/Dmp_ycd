@@ -13,6 +13,8 @@ object Constants {
     var TODAY: String = _
     var STORE_ID: String = _
     var TIMESTAMP: Long = _
+    var MQ_ENABLE: Boolean = _
+    val ERROR_LOG: StringBuffer = new StringBuffer("")
   }
 
   /** 输入文件路径 **/

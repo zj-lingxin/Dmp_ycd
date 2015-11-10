@@ -11,6 +11,7 @@ trait Service extends Logging {
   protected def handlingExceptions(t: Throwable) {
     MailAgent(t, mailSubject).sendMessage()
     logError(mailSubject, t)
+    Constants.App.ERROR_LOG.append(s"$mailSubject\n${t.toString}\n${t.getStackTraceString}\n")
   }
 
   protected def printStartLog() = logInfo(Utils.wrapLog(s"开始运行${getClass.getSimpleName}的run()方法"))

@@ -51,14 +51,16 @@ object CreditService extends org.apache.spark.Logging {
     }
     MqScore.collect().foreach(s => MQUtils.joinList(list, s.toList))
     //封装数据完成
-    MQUtils.sendData(Constants.App.STORE_ID, FileUtils.getPropByKey("queue_name_online"), list)
+    MQUtils.sendData(Constants.App.STORE_ID, MQUtils.getPropByKey("queue_name_online"), list)
     MQUtils.closeMQ()
   }
 }
 
 class CreditService extends Service {
   override protected def runServices: Unit = {
-    CreditService.sendMessageToMQ()
+    if (Constants.App.MQ_ENABLE) {
+      CreditService.sendMessageToMQ()
+    }
     FileUtils.saveAsTextFile(CreditService.getAmountOfCredit, Constants.OutputPath.CREDIT)
   }
 }
