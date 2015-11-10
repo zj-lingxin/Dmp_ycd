@@ -18,7 +18,8 @@ object Main extends Logging {
   private def useArgs(args: Array[String]) {
     Constants.App.STORE_ID = args(0)
     Constants.App.TIMESTAMP = args(1).toLong
-    Constants.App.TODAY = DateUtils.timestampToStr(args(1).toLong, "yyyyMM/dd")
+    //从外部传入的是秒级别的时间戳，所以要乘以1000
+    Constants.App.TODAY = DateUtils.timestampToStr(args(1).toLong * 1000, "yyyyMM/dd")
     if (args.length > 2 && args(2).toUpperCase() == "MQ") {
       Constants.App.MQ_ENABLE = true
     } else {
