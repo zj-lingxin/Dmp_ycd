@@ -24,7 +24,7 @@ object Constants {
     val ORDER_DETAILS = s"$DIR/tobacco_order_details/*"
     val TOBACCO_PRICE = s"$DIR/tobacco_price/*"
     //整合了ORDER_DETAILS和TOBACCO_PRICE的信息
-    val FULL_FIELDS_ORDER = s"$DIR/full_fields_order"
+    val TEMP_ORDER = s"$DIR/full_fields_order"
   }
 
   /** 输出文件路径 **/

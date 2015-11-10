@@ -1,7 +1,7 @@
 package com.asto.dmp.ycd.service
 
 import com.asto.dmp.ycd.base.{Service, Constants}
-import com.asto.dmp.ycd.dao.BizDao._
+import com.asto.dmp.ycd.dao.ServiceDao
 import com.asto.dmp.ycd.service.ScoreService._
 import com.asto.dmp.ycd.util.{FileUtils, Utils}
 
@@ -96,10 +96,10 @@ object ScoreService {
    * 中文：(店铺id  ,(   订货额年均值绩点,      订货条数年均值绩点))
    */
   private def getScaleGPA = {
-    val payMoneyAnnAvgGPA = payMoneyAnnAvg
+    val payMoneyAnnAvgGPA = ServiceDao.payMoneyAnnAvg
       .map(t => (t._1, calcPayMoneyAnnAvgGPA(t._2)))
 
-    val orderAmountAnnAvgGPA = orderAmountAnnAvg
+    val orderAmountAnnAvgGPA = ServiceDao.orderAmountAnnAvg
       .map(t => (t._1, calcOrderAmountAnnAvgGPA(t._2)))
     payMoneyAnnAvgGPA.leftOuterJoin(orderAmountAnnAvgGPA).map(t => (t._1, (t._2._1, t._2._2.get)))
   }
@@ -110,9 +110,9 @@ object ScoreService {
    * 中文：(店铺id  ,(   销售额租金比绩点,           1年毛利率绩点))
    */
   private def getProfitGPA = {
-    val salesRentRatioGPA = salesRentRatio
+    val salesRentRatioGPA = ServiceDao.salesRentRatio
       .map(t => (t._1, calcSalesRentRatioGPA(t._2)))
-    val grossMarginLastYearGPA = grossMarginLastYear
+    val grossMarginLastYearGPA = ServiceDao.grossMarginLastYear
       .map(t => (t._1, calcGrossMarginLastYearGPA(t._2)))
     salesRentRatioGPA.leftOuterJoin(grossMarginLastYearGPA).map(t => (t._1, (t._2._1, t._2._2.get)))
   }
@@ -123,7 +123,7 @@ object ScoreService {
    * 中文：(店铺id  ,             月销售增长比绩点)
    */
   private def getGrowingUpGPA = {
-    val monthlySalesGrowthRatioGPA = monthlySalesGrowthRatio
+    val monthlySalesGrowthRatioGPA = ServiceDao.monthlySalesGrowthRatio
       .map(t => (t._1, calcMonthlySalesGrowthRatioGPA(t._2)))
     monthlySalesGrowthRatioGPA
   }
@@ -134,13 +134,13 @@ object ScoreService {
    * 中文：(店铺id  , (           每条均价年均值绩点 ,                    经营期限绩点,                  活跃品类绩点,            品类集中度绩点))
    */
   private def getOperationGPA = {
-    val perCigarAvgPriceOfAnnAvgGPA = perCigarAvgPriceOfAnnAvg
+    val perCigarAvgPriceOfAnnAvgGPA = ServiceDao.perCigarAvgPriceOfAnnAvg
       .map(t => (t._1, calcPerCigarAvgPriceOfAnnAvgGPA(t._2)))
-    val monthsNumFromEarliestOrderGPA = monthsNumFromEarliestOrder
+    val monthsNumFromEarliestOrderGPA = ServiceDao.monthsNumFromEarliestOrder
       .map(t => (t._1, calcMonthsNumFromEarliestOrderGPA(t._2)))
-    val activeCategoryInLastMonthGPA = getActiveCategoryInLastMonth
+    val activeCategoryInLastMonthGPA = ServiceDao.getActiveCategoryInLastMonth
       .map(t => (t._1, calcActiveCategoryInLastMonthGPA(t._2)))
-    val categoryConcentrationGPA = categoryConcentration
+    val categoryConcentrationGPA = ServiceDao.categoryConcentration
       .map(t => (t._1, calcCategoryConcentrationGPA(t._2)))
     val tempOperationsGPA1 = perCigarAvgPriceOfAnnAvgGPA.leftOuterJoin(monthsNumFromEarliestOrderGPA).map(t => (t._1, (t._2._1, t._2._2.get)))
     val tempOperationsGPA2 = activeCategoryInLastMonthGPA.leftOuterJoin(categoryConcentrationGPA).map(t => (t._1, (t._2._1, t._2._2.get)))
@@ -153,7 +153,7 @@ object ScoreService {
    * 中文：(店铺id  ,                      线下商圈指数)
    */
   private def getMarketGPA = {
-    val offlineShoppingDistrictIndexGPA = offlineShoppingDistrictIndex
+    val offlineShoppingDistrictIndexGPA = ServiceDao.offlineShoppingDistrictIndex
       .map(t => (t._1, calcOfflineShoppingDistrictIndexGPA(t._2)))
     offlineShoppingDistrictIndexGPA
   }

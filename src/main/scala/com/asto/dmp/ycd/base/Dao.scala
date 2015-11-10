@@ -43,9 +43,9 @@ trait Dao extends Logging {
       val fieldsNum = schema.split(",").length
       val tmpRDD = Contexts.sparkContext.textFile(inputFilePath)
         .map(_.split(separator)).cache()
-      tmpRDD.map(t =>(t.length,1)).countByValue()
+      /*tmpRDD.map(t =>(t.length,1)).countByValue()
       logInfo(Utils.logWrapper(s"schema的字段是$fieldsNum,解析后的字段个数与行数的关系是:${tmpRDD.map(_.length).countByValue()}"))
-
+*/
       val rowRDD = tmpRDD.filter(x => x.length == fieldsNum)
         .map(fields => for (field <- fields) yield field.trim)
         .map(fields => Row(fields: _*))
