@@ -50,24 +50,4 @@ object Constants {
     val FULL_FIELDS_ORDER = "store_id,order_id,order_date,cigar_name,wholesale_price,purchase_amount,order_amount,money_amount,cigar_brand,retail_price,producer_name"
   }
 
-  /** 邮件发送功能相关常量 **/
-  object Mail {
-    //以下参数与prop.properties中的参数一致。
-    val TO = "lingx@asto-inc.com"
-    val FROM = "dmp_notice@asto-inc.com"
-    val PASSWORD = "astodmp2015"
-    val SMTPHOST = "smtp.qq.com"
-    val SUBJECT = s"“${App.CHINESE_NAME}”项目出异常了！"
-    val CC = ""
-    val BCC = ""
-    //ENABLE为false时，不启用邮件发送功能，为true是可以使用
-    val ENABLE = "false"
-
-    //以下参数prop.properties中没有， MAIL_CREDIT_SUBJECT是授信规则模型出问题时邮件的主题
-    val SCORE_SUBJECT = s"${App.CHINESE_NAME}-评分规则结果集写入失败，请尽快查明原因！"
-    val FIELDS_CALCULATION_SUBJECT = s"${App.CHINESE_NAME}-字段计算的结果写入失败，请尽快查明原因！"
-    val CREDIT_SUBJECT = s"${App.CHINESE_NAME}-授信规则结果集写入失败，请尽快查明原因！"
-    val DATA_PREPARE_SUBJECT = s"${App.CHINESE_NAME}-数据准备结果集写入失败，请尽快查明原因！"
-    val DEFAULT_SUBJECT = s"${Constants.App.CHINESE_NAME}出现异常"
-  }
 }

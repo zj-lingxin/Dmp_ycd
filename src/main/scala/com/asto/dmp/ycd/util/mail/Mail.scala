@@ -1,51 +1,18 @@
 package com.asto.dmp.ycd.util.mail
 
-import java.io.FileInputStream
-import java.util.Properties
-import com.asto.dmp.ycd.base.Constants
+import com.asto.dmp.ycd.util.Props
 
-object Mail {
-  val prop = new Properties()
-  /*
-  在spark-submit中加入--driver-java-options -DPropPath=/home/hadoop/prop.properties的参数后，
-  使用System.getProperty("PropPath")就能获取路径：/home/hadoop/prop.properties
-   */
-  private val propPath = System.getProperty("PropPath")
-  private val hasPropPath = Option(propPath).isDefined
-
-  //如果spark-submit中指定了prop.properties文件的路径，那么使用prop.properties中的属性，否则使用该类中定义的属性
-  if (hasPropPath) {
-    prop.load(new FileInputStream(propPath))
-  } else {
-    prop.put("mail_to", Constants.Mail.TO)
-    prop.put("mail_from", Constants.Mail.FROM)
-    prop.put("mail_password", Constants.Mail.PASSWORD)
-    prop.put("mail_smtpHost", Constants.Mail.SMTPHOST)
-    prop.put("mail_subject", Constants.Mail.SUBJECT)
-    prop.put("mail_cc", Constants.Mail.CC)
-    prop.put("mail_bcc", Constants.Mail.BCC)
-    prop.put("mail_enable", Constants.Mail.ENABLE)
-  }
-
-  def getPropByKey(propertyKey: String): String = {
-    if (hasPropPath)
-      new String(prop.getProperty(propertyKey).getBytes("ISO-8859-1"), "utf-8")
-    else
-      prop.getProperty(propertyKey)
-  }
-}
-
-class Mail(var privateContext: String, var subject: String = Mail.getPropByKey("mail_subject"), var to: String = Mail.getPropByKey("mail_to")) {
+class Mail(var privateContext: String, var subject: String = Props.get("mail_subject"), var to: String = Props.get("mail_to")) {
   //发件箱
-  var from = Mail.prop.getProperty("mail_from")
+  var from = Props.get("mail_from")
   //发件箱的密码
-  var password = Mail.prop.getProperty("mail_password")
+  var password = Props.get("mail_password")
   //简单邮件传送协议服务器
-  var smtpHost = Mail.prop.getProperty("mail_smtpHost")
+  var smtpHost = Props.get("mail_smtpHost")
   //抄送给哪些邮箱，多个邮箱之前用“，”分隔
-  var cc = Mail.prop.getProperty("mail_cc")
+  var cc = Props.get("mail_cc")
   //密送给哪些邮箱，多个邮箱之前用“，”分隔
-  var bcc = Mail.prop.getProperty("mail_bcc")
+  var bcc = Props.get("mail_bcc")
 
   def this(t: Throwable) {
     this("")

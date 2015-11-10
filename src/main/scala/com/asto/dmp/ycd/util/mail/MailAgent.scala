@@ -4,9 +4,11 @@ import java.util.{Date, Properties}
 import javax.mail._
 import javax.mail.internet._
 
+import com.asto.dmp.ycd.util.Props
+
 object MailAgent {
   def apply(mail:Mail) = new MailAgent(mail)
-  def apply(context: String, subject: String = Mail.getPropByKey("mail_subject"), to: String = Mail.getPropByKey("mail_to")) =
+  def apply(context: String, subject: String = Props.get("mail_subject"), to: String = Props.get("mail_to")) =
     new MailAgent(new Mail(context, subject, to))
   def apply(t: Throwable, subject: String, to: String) = new MailAgent(new Mail(t, subject, to))
   def apply(t: Throwable, subject: String) = new MailAgent(new Mail(t, subject))
@@ -20,7 +22,7 @@ class MailAgent(mail: Mail) {
   val message = new MimeMessage(session)
 
   def sendMessage() = {
-    if(Mail.prop.getProperty("mail_enable") == "true") {
+    if(Props.get("mail_enable") == "true") {
       println("******************************** 邮件信息：" + mail + "********************************")
       message.setFrom(new InternetAddress(mail.from))
       setToCcBccRecipients()
