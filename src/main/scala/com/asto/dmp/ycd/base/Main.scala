@@ -40,7 +40,7 @@ object Main extends Logging {
 
   private def argsIsIllegal(args: Array[String]) = {
     if (Option(args).isEmpty || args.length < 2) {
-      logError(Utils.wrapLog("请传入程序参数: 店铺id[args(0)]、 时间戳[args(1)]、是否使用将消息发送给mq：[args(2)]:是（\"MQ\"）,否（不传或其他）"))
+      logError(Utils.logWrapper("请传入程序参数: 店铺id[args(0)]、 时间戳[args(1)]、是否使用将消息发送给mq：[args(2)]:是（\"MQ\"）,否（不传或其他）"))
       true
     } else {
       false
@@ -48,12 +48,12 @@ object Main extends Logging {
   }
 
   private def printRunningTime(startTime: Long) {
-    logInfo(Utils.wrapLog(s"程序共运行${(System.currentTimeMillis() - startTime) / 1000}秒"))
+    logInfo(Utils.logWrapper(s"程序共运行${(System.currentTimeMillis() - startTime) / 1000}秒"))
   }
 
   private def printErrorLogsIfExist() {
     if (Constants.App.ERROR_LOG.toString != "") {
-      logError(Utils.wrapLog(s"程序在运行过程中遇到了如下错误：${Constants.App.ERROR_LOG.toString}"))
+      logError(Utils.logWrapper(s"程序在运行过程中遇到了如下错误：${Constants.App.ERROR_LOG.toString}"))
     }
   }
 }

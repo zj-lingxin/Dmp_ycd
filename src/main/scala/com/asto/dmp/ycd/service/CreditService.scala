@@ -38,10 +38,10 @@ object CreditService extends org.apache.spark.Logging {
    * 将计算结果通过MQ发送出去
    */
   def sendMessageToMQ() {
-    logError("准备向MQ发送消息")
+    logInfo(Utils.logWrapper("sendMessageToMQ() start "))
     val list = ListBuffer[JSONObject]()
     //将rdd里的数据拆开转成json装入list
-    val MqScore=getAmountOfCredit.map{
+    val MQScore = getAmountOfCredit.map{
       t =>
       val list = ListBuffer[JSONObject]()
       val creditScore = MQUtils.getYcdJsonObject("M_PROP_CREDIT_SCORE", t._3, Constants.App.TIMESTAMP.toString, "1")
@@ -49,10 +49,13 @@ object CreditService extends org.apache.spark.Logging {
       list += creditScore
       list += creditAmount
     }
-    MqScore.collect().foreach(s => MQUtils.joinList(list, s.toList))
+    MQScore.collect().foreach(s => MQUtils.joinList(list, s.toList))
     //封装数据完成
-    MQUtils.sendData(Constants.App.STORE_ID, MQUtils.getPropByKey("queue_name_online"), list)
+    //~~修改MQUtils.sendData(Constants.App.STORE_ID, MQUtils.getPropByKey("queue_name_online"), list)
+    MQUtils.sendData(Constants.App.STORE_ID, "XDGC_BIGDPLAT_PROP_CREDIT_TOBACCO_LISTEN_TTTTTTTTTT", list)
+    logInfo(Utils.logWrapper("MQUtils.closeMQ()"))
     MQUtils.closeMQ()
+    logInfo(Utils.logWrapper("sendMessageToMQ() end!"))
   }
 }
 

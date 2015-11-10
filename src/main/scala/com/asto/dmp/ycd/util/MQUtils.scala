@@ -41,13 +41,16 @@ object MQUtils extends scala.Serializable {
   /**
    * 将支付宝用户的统计指标封装后发送 到MQ
    */
-  def sendData(store_Id: String, queue_name: String, list: ListBuffer[JSONObject]) {
-    val originalMap = Map("store_Id" -> store_Id)
+  def sendData(propertyUuid: String, queue_name: String, list: ListBuffer[JSONObject]) {
+
+    val originalMap = Map("propertyUuid" -> propertyUuid)
     val jsonArray = JSONArray(list.toList)
     val resultMap = originalMap.+("quotaItemList" -> jsonArray)
     val json = new JSONObject(resultMap)
     //    val sender: Send = new SendImpl
+    println("###################### SendImpl.send(queue_name, json.toString()) start ############")
     SendImpl.send(queue_name, json.toString())
+    println("###################### SendImpl.send(queue_name, json.toString()) end ############")
   }
 
   //关闭MQ

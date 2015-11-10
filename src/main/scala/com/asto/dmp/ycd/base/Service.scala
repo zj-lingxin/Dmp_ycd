@@ -14,9 +14,9 @@ trait Service extends Logging {
     Constants.App.ERROR_LOG.append(s"$mailSubject\n${t.toString}\n${t.getStackTraceString}\n")
   }
 
-  protected def printStartLog() = logInfo(Utils.wrapLog(s"开始运行${getClass.getSimpleName}的run()方法"))
+  protected def printStartLog() = logInfo(Utils.logWrapper(s"开始运行${getClass.getSimpleName}的run()方法"))
 
-  protected def printEndLog() = logInfo(Utils.wrapLog(s"${getClass.getSimpleName}的run()方法运行结束"))
+  protected def printEndLog() = logInfo(Utils.logWrapper(s"${getClass.getSimpleName}的run()方法运行结束"))
 
   protected def runServices()
 

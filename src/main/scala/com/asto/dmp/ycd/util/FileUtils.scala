@@ -15,7 +15,7 @@ object FileUtils extends Logging {
       val filePath = new Path(path)
       val HDFSFilesSystem = filePath.getFileSystem(new Configuration())
       if (HDFSFilesSystem.exists(filePath)) {
-        logInfo(Utils.wrapLog(s"删除目录：$filePath"))
+        logInfo(Utils.logWrapper(s"删除目录：$filePath"))
         HDFSFilesSystem.delete(filePath, true)
       }
     }

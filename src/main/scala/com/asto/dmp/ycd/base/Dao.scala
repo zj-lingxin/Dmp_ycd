@@ -17,7 +17,7 @@ trait Dao extends Logging {
     if (Option(sqlObj.orderBy).isDefined) {
       //使用OrderBy的时候，需要将spark.sql.shuffle.partitions设小
       Contexts.sqlContext.sql(s"SET spark.sql.shuffle.partitions=10")
-      logInfo(Utils.wrapLog("order by 操作需要设置: SET spark.sql.shuffle.partitions=200 "))
+      logInfo(Utils.logWrapper("order by 操作需要设置: SET spark.sql.shuffle.partitions=200 "))
       _sql += s" ORDER BY  ${sqlObj.orderBy} "
     }
 
@@ -26,12 +26,12 @@ trait Dao extends Logging {
     if (Option(sqlObj.limit).isDefined)
       _sql += s" LIMIT ${sqlObj.limit}"
 
-    logInfo(Utils.wrapLog(s"执行Sql:${_sql}"))
+    logInfo(Utils.logWrapper(s"执行Sql:${_sql}"))
     val rdd = Contexts.sqlContext.sql(_sql).map(a => a.toSeq.toArray)
 
     if (Option(sqlObj.orderBy).isDefined) {
       //order by操作完成后设回默认值200
-      logInfo(Utils.wrapLog("order by 操作完成,设回默认值: SET spark.sql.shuffle.partitions=200"))
+      logInfo(Utils.logWrapper("order by 操作完成,设回默认值: SET spark.sql.shuffle.partitions=200"))
       Contexts.sqlContext.sql("SET spark.sql.shuffle.partitions=200")
     }
     rdd
@@ -44,13 +44,13 @@ trait Dao extends Logging {
       val tmpRDD = Contexts.sparkContext.textFile(inputFilePath)
         .map(_.split(separator)).cache()
       tmpRDD.map(t =>(t.length,1)).countByValue()
-      logInfo(Utils.wrapLog(s"schema的字段是$fieldsNum,解析后的字段个数与行数的关系是:${tmpRDD.map(_.length).countByValue()}"))
+      logInfo(Utils.logWrapper(s"schema的字段是$fieldsNum,解析后的字段个数与行数的关系是:${tmpRDD.map(_.length).countByValue()}"))
 
       val rowRDD = tmpRDD.filter(x => x.length == fieldsNum)
         .map(fields => for (field <- fields) yield field.trim)
         .map(fields => Row(fields: _*))
       Contexts.sqlContext.createDataFrame(rowRDD, simpleSchema(schema)).registerTempTable(tempTableName)
-      logInfo(Utils.wrapLog(s"注册临时表：$tempTableName"))
+      logInfo(Utils.logWrapper(s"注册临时表：$tempTableName"))
     }
   }
 

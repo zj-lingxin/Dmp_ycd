@@ -49,10 +49,14 @@ public class Conf {
 	public void Connect() throws IOException, TimeoutException {
 		//Map<String, String> map = GetAllProperties();
 		factory = new ConnectionFactory();
-		factory.setHost(MQUtils.getPropByKey("rabbit_mq_host"));
+/*		factory.setHost(MQUtils.getPropByKey("rabbit_mq_host"));
 		factory.setPort(Integer.valueOf(MQUtils.getPropByKey("rabbit_mq_port")));
 		factory.setUsername(MQUtils.getPropByKey("rabbit_mq_username"));
-		factory.setPassword(MQUtils.getPropByKey("rabbit_mq_password"));
+		factory.setPassword(MQUtils.getPropByKey("rabbit_mq_password"));*/
+		factory.setHost("192.168.7.7");
+		factory.setPort(5672);
+		factory.setUsername("guest");
+		factory.setPassword("guest");
 		connection = factory.newConnection();
 		channel = connection.createChannel();
 	}

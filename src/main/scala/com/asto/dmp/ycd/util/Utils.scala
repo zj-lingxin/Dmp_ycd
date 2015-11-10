@@ -32,7 +32,7 @@ object Utils {
   /**
    * Add a ${Constants.App.LOG_WRAPPER} in the log header and tail
    */
-  def wrapLog(log: String) = {
+  def logWrapper(log: String) = {
     s"${Constants.App.LOG_WRAPPER} $log ${Constants.App.LOG_WRAPPER}"
   }
 
