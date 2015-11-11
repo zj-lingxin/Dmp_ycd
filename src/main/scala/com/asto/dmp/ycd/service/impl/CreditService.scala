@@ -2,9 +2,10 @@ package com.asto.dmp.ycd.service.impl
 
 import com.asto.dmp.ycd.base._
 import com.asto.dmp.ycd.dao.impl.BizDao
-import com.asto.dmp.ycd.mq.{MQAgent, MQMessage}
+import com.asto.dmp.ycd.mq.{Msg, MQAgent}
 import com.asto.dmp.ycd.service.Service
 import com.asto.dmp.ycd.util._
+
 /**
  * 授信规则
  * 授信金额=min(30万，近12月月均提货额*评分对应系数）
@@ -38,18 +39,18 @@ object CreditService extends org.apache.spark.Logging {
    * 将计算结果通过MQ发送出去
    */
   def sendMessageToMQ() {
-    MQAgent.send(MQMessage.amountOfCredit(getScoreAndAmount))
-  }
-
-  private def getScoreAndAmount = {
     val amountOfCreditArray = getAmountOfCredit.collect()(0)
-    (amountOfCreditArray._3, amountOfCreditArray._5)
+    MQAgent.send(
+      "scoreAndAmount",
+      Msg("M_PROP_CREDIT_SCORE", amountOfCreditArray._3, "1"),
+      Msg("M_PROP_CREDIT_LIMIT_AMOUNT", amountOfCreditArray._5, "1")
+    )
   }
 }
 
 class CreditService extends Service {
   override protected def runServices(): Unit = {
-   if (Constants.App.MQ_ENABLE) {
+    if (Constants.App.MQ_ENABLE) {
       CreditService.sendMessageToMQ()
     }
     FileUtils.saveAsTextFile(CreditService.getAmountOfCredit, Constants.OutputPath.CREDIT)

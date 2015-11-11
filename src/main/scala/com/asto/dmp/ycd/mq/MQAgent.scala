@@ -3,7 +3,6 @@ package com.asto.dmp.ycd.mq
 import com.asto.dmp.ycd.base.Props
 import com.rabbitmq.client.{Channel, Connection, ConnectionFactory, MessageProperties}
 import org.apache.spark.Logging
-import scala.util.parsing.json.JSONObject
 
 object MQAgent extends Logging {
   private val connection: Connection = getConnection
@@ -27,8 +26,8 @@ object MQAgent extends Logging {
     channel.basicPublish(queueName, queueName, MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes("UTF-8"))
   }
 
-  def send(messageMap: Map[String, Any]) {
-    send(new JSONObject(messageMap).toString())
+  def send(quotaItemName: String, msg: Msg *): Unit = {
+    MQAgent.send(Msg.getJson(quotaItemName, msg.toList))
   }
 
   def close() {
