@@ -10,10 +10,10 @@ object MQMessage {
      creditAmountJsonObj("M_PROP_CREDIT_SCORE", scoreAndMoneyTuple._1, "1"),
      creditAmountJsonObj("M_PROP_CREDIT_LIMIT_AMOUNT", scoreAndMoneyTuple._2, "1")
    )
-    Map("propertyUuid" -> Constants.App.STORE_ID, "sendTime" -> DateUtils.getStrDate("yyyy-MM-dd HH:mm:ss"), "quotaItemList" -> JSONArray(listBuffer.toList))
+    Map("propertyUuid" -> Constants.App.STORE_ID, "quotaItemList" -> JSONArray(listBuffer.toList))
   }
 
   def creditAmountJsonObj(code_name: String, value: Any, indexFlag: String): JSONObject = {
-    new JSONObject(Map[String, Any]("indexFlag" -> indexFlag, "quotaCode" -> code_name, "quotaValue" -> value))
+    new JSONObject(Map[String, Any]("indexFlag" -> indexFlag, "quotaCode" -> code_name, "targetTime" -> DateUtils.getStrDate("yyyyMM"), "quotaValue" -> value))
   }
 }

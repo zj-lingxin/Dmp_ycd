@@ -42,5 +42,4 @@ class FieldsCalculationService extends Service {
     FileUtils.saveAsTextFile(BizDao.getActiveCategoryInLast12Months, Constants.OutputPath.ACTIVE_CATEGORY)
     FileUtils.saveAsTextFile(FieldsCalculationService.getCalcFields, Constants.OutputPath.FIELD)
   }
-
 }
