@@ -1,8 +1,8 @@
-package com.asto.dmp.ycd.service
+package com.asto.dmp.ycd.service.impl
 
-import com.asto.dmp.ycd.base.{Service, Constants}
-import com.asto.dmp.ycd.dao.BizDao
-import com.asto.dmp.ycd.service.ScoreService._
+import com.asto.dmp.ycd.base.Constants
+import com.asto.dmp.ycd.dao.impl.BizDao
+import com.asto.dmp.ycd.service.Service
 import com.asto.dmp.ycd.util.{FileUtils, Utils}
 
 object ScoreService {
@@ -201,8 +201,8 @@ object ScoreService {
  */
 class ScoreService extends Service {
   override def runServices() =  {
-    FileUtils.saveAsTextFile(getResultGPA, Constants.OutputPath.GPA)
-    FileUtils.saveAsTextFile(getAllScore, Constants.OutputPath.SCORE)
+    FileUtils.saveAsTextFile(ScoreService.getResultGPA, Constants.OutputPath.GPA)
+    FileUtils.saveAsTextFile(ScoreService.getAllScore, Constants.OutputPath.SCORE)
   }
 }
 

@@ -1,6 +1,6 @@
-package com.asto.dmp.ycd.base
+package com.asto.dmp.ycd.dao
 
-import com.asto.dmp.ycd.dao.BizDao
+import com.asto.dmp.ycd.base.{Constants, Contexts}
 import com.asto.dmp.ycd.util.Utils
 import org.apache.spark.Logging
 import org.apache.spark.rdd.RDD

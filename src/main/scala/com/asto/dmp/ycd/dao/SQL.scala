@@ -1,4 +1,4 @@
-package com.asto.dmp.ycd.base
+package com.asto.dmp.ycd.dao
 
 class SQL(private var _select: String, private var _where: String) {
   private var _orderBy: String = _

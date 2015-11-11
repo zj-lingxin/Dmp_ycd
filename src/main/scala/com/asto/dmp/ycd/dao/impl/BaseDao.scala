@@ -1,8 +1,7 @@
-package com.asto.dmp.ycd.dao
+package com.asto.dmp.ycd.dao.impl
 
 import com.asto.dmp.ycd.base._
-import com.asto.dmp.ycd.util.{Utils, DateUtils, BizUtils}
-import org.apache.spark.rdd.RDD
+import com.asto.dmp.ycd.dao.{Dao, SQL}
 
 object BaseDao extends Dao {
 

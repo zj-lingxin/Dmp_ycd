@@ -1,7 +1,7 @@
 package com.asto.dmp.ycd.base
 
 import com.asto.dmp.ycd.mq.MQAgent
-import com.asto.dmp.ycd.service._
+import com.asto.dmp.ycd.service.impl.{ScoreService, FieldsCalculationService, CreditService}
 import com.asto.dmp.ycd.util.{DateUtils, Utils}
 import org.apache.spark.Logging
 

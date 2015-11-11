@@ -1,6 +1,6 @@
 package com.asto.dmp.ycd.mq
 
-import com.asto.dmp.ycd.util.Props
+import com.asto.dmp.ycd.base.Props
 import com.rabbitmq.client.{Channel, Connection, ConnectionFactory, MessageProperties}
 import org.apache.spark.Logging
 import scala.util.parsing.json.JSONObject

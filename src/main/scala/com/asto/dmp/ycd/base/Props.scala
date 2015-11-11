@@ -1,4 +1,4 @@
-package com.asto.dmp.ycd.util
+package com.asto.dmp.ycd.base
 
 import java.io.FileInputStream
 import java.util.Properties

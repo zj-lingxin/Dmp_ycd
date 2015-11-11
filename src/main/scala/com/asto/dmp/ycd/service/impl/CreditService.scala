@@ -1,11 +1,10 @@
-package com.asto.dmp.ycd.service
+package com.asto.dmp.ycd.service.impl
 
 import com.asto.dmp.ycd.base._
-import com.asto.dmp.ycd.dao.{BizDao, BaseDao}
-import com.asto.dmp.ycd.mq.{MQMessage, MQAgent}
+import com.asto.dmp.ycd.dao.impl.BizDao
+import com.asto.dmp.ycd.mq.{MQAgent, MQMessage}
+import com.asto.dmp.ycd.service.Service
 import com.asto.dmp.ycd.util._
-import scala.collection.mutable.ListBuffer
-import scala.util.parsing.json.{JSONArray, JSONObject}
 /**
  * 授信规则
  * 授信金额=min(30万，近12月月均提货额*评分对应系数）

@@ -1,8 +1,8 @@
-package com.asto.dmp.ycd.base
+package com.asto.dmp.ycd.service
 
+import com.asto.dmp.ycd.base.{Constants, Contexts}
 import com.asto.dmp.ycd.util.Utils
 import com.asto.dmp.ycd.util.mail.MailAgent
-import com.sun.prism.impl.BaseContext
 import org.apache.spark.Logging
 
 trait Service extends Logging {

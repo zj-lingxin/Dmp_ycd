@@ -1,7 +1,8 @@
-package com.asto.dmp.ycd.service
+package com.asto.dmp.ycd.service.impl
 
-import com.asto.dmp.ycd.base.{Service, Constants}
-import com.asto.dmp.ycd.dao.{BizDao, BaseDao}
+import com.asto.dmp.ycd.base.Constants
+import com.asto.dmp.ycd.dao.impl.BizDao
+import com.asto.dmp.ycd.service.Service
 import com.asto.dmp.ycd.util.FileUtils
 
 object FieldsCalculationService {

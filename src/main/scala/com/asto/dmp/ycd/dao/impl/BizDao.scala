@@ -1,8 +1,8 @@
-package com.asto.dmp.ycd.dao
+package com.asto.dmp.ycd.dao.impl
 
-import com.asto.dmp.ycd.base.{Contexts, Constants, SQL}
-import com.asto.dmp.ycd.util.{Utils, DateUtils, BizUtils}
-import org.apache.spark.storage.StorageLevel
+import com.asto.dmp.ycd.base.Contexts
+import com.asto.dmp.ycd.dao.SQL
+import com.asto.dmp.ycd.util.{BizUtils, DateUtils, Utils}
 
 object BizDao {
 

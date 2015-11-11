@@ -1,6 +1,6 @@
 package com.asto.dmp.ycd.util.mail
 
-import com.asto.dmp.ycd.util.Props
+import com.asto.dmp.ycd.base.Props
 
 class Mail(var privateContext: String, var subject: String = Props.get("mail_subject"), var to: String = Props.get("mail_to")) {
   //发件箱
