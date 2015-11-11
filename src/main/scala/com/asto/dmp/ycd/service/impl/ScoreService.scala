@@ -2,6 +2,7 @@ package com.asto.dmp.ycd.service.impl
 
 import com.asto.dmp.ycd.base.Constants
 import com.asto.dmp.ycd.dao.impl.BizDao
+import com.asto.dmp.ycd.mq.{MQMessage, MQAgent}
 import com.asto.dmp.ycd.service.Service
 import com.asto.dmp.ycd.util.{FileUtils, Utils}
 
@@ -130,7 +131,7 @@ object ScoreService {
 
   /**
    * 获取运营相关的绩点
-   * 返回：(licenseNo, (perCigarAvgPriceOfAnnAvgGPA, monthsNumsFromEarliestOrderGPA,activeCategoryInLastMonthGPA,categoryConcentrationGPA))
+   * 返回：(storeId, (perCigarAvgPriceOfAnnAvgGPA, monthsNumsFromEarliestOrderGPA,activeCategoryInLastMonthGPA,categoryConcentrationGPA))
    * 中文：(店铺id  , (           每条均价年均值绩点 ,                    经营期限绩点,                  活跃品类绩点,            品类集中度绩点))
    */
   private def getOperationGPA = {
@@ -149,7 +150,7 @@ object ScoreService {
 
   /**
    * 获取市场相关的绩点
-   * 返回：(licenseNo, offlineShoppingDistrictIndexGPA)
+   * 返回：(storeId, offlineShoppingDistrictIndexGPA)
    * 中文：(店铺id  ,                      线下商圈指数)
    */
   private def getMarketGPA = {
@@ -160,7 +161,7 @@ object ScoreService {
 
   /**
    * 获取所有的绩点
-   * 返回：(licenseNo,(payMoneyAnnAvgGPA,perCigarAvgPriceOfAnnAvgGPA,salesRentRatioGPA,grossMarginLastYearGPA,
+   * 返回：(storeId,(payMoneyAnnAvgGPA,perCigarAvgPriceOfAnnAvgGPA,salesRentRatioGPA,grossMarginLastYearGPA,
    * monthlySalesGrowthRatioGPA,orderAmountAnnAvgGPA,monthsNumsFromEarliestOrderGPA,
    * activeCategoryInLastMonthGPA,categoryConcentrationGPA,offlineShoppingDistrictIndexGPA))
    * 中文：(店铺id  ,( 订货额年均值绩点,每条均价年均值绩点,销售额租金比绩点,1年毛利率绩点,月销售增长比绩点,订货条数年均值绩点,经营期限绩点,活跃品类绩点,品类集中度绩点,线下商圈指数))
@@ -194,6 +195,10 @@ object ScoreService {
     else if (GPA < 0) 0D
     else GPA
   }
+
+  def sendAllScoreToMQ() {
+    MQAgent.send(MQMessage.allScore(getAllScore.map(t => (t._2,t._3,t._4,t._5,t._6,t._7)).collect()(0)))
+  }
 }
 
 /**
@@ -201,6 +206,9 @@ object ScoreService {
  */
 class ScoreService extends Service {
   override def runServices() =  {
+    if (Constants.App.MQ_ENABLE) {
+      ScoreService.sendAllScoreToMQ()
+    }
     FileUtils.saveAsTextFile(ScoreService.getResultGPA, Constants.OutputPath.GPA)
     FileUtils.saveAsTextFile(ScoreService.getAllScore, Constants.OutputPath.SCORE)
   }
