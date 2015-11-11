@@ -42,4 +42,5 @@ object Utils {
   def retainDecimal(number: Double, bits: Int = 2): Double = {
     BigDecimal(number).setScale(bits, BigDecimal.RoundingMode.HALF_UP).doubleValue()
   }
+
 }

@@ -1,7 +1,7 @@
 package com.asto.dmp.ycd.service
 
 import com.asto.dmp.ycd.base._
-import com.asto.dmp.ycd.dao.{ServiceDao, BizDao}
+import com.asto.dmp.ycd.dao.{BizDao, BaseDao}
 import com.asto.dmp.ycd.mq.{MQMessage, MQAgent}
 import com.asto.dmp.ycd.util._
 import scala.collection.mutable.ListBuffer
@@ -30,7 +30,7 @@ object CreditService extends org.apache.spark.Logging {
    * 店铺id	，近12月月均提货额	，评分，评分对应系数，授信额度
    */
   def getAmountOfCredit = {
-    ServiceDao.payMoneyAnnAvg
+    BizDao.payMoneyAnnAvg
       .leftOuterJoin(ScoreService.getAllScore.map(t => (t._1, t._7)))
       .map(t => (t._1, t._2._1, t._2._2.get, getScoreCoefficient(t._2._2.get.toString.toInt), Math.min(maxAmountOfCredit, Utils.retainDecimal(getScoreCoefficient(t._2._2.get) * t._2._1, 0).toLong))).cache()
   }
@@ -39,8 +39,7 @@ object CreditService extends org.apache.spark.Logging {
    * 将计算结果通过MQ发送出去
    */
   def sendMessageToMQ() {
-    MQAgent.send(Props.get("queue_name_online"), MQMessage.amountOfCredit(getScoreAndAmount))
-    MQAgent.close
+    MQAgent.send(MQMessage.amountOfCredit(getScoreAndAmount))
   }
 
   private def getScoreAndAmount = {

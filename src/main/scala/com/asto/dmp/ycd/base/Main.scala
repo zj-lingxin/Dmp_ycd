@@ -1,7 +1,8 @@
 package com.asto.dmp.ycd.base
 
+import com.asto.dmp.ycd.mq.MQAgent
 import com.asto.dmp.ycd.service._
-import com.asto.dmp.ycd.util.{FileUtils, DateUtils, Utils}
+import com.asto.dmp.ycd.util.{DateUtils, Utils}
 import org.apache.spark.Logging
 
 object Main extends Logging {
@@ -10,9 +11,8 @@ object Main extends Logging {
     if(argsIsIllegal(args)) return
     useArgs(args)
     runAllServices()
-    stopSparkContext()
-    printErrorLogsIfExist()
-    printRunningTime(startTime)
+    closeResources()
+    printEndLogs(startTime)
   }
 
   private def useArgs(args: Array[String]) {
@@ -28,13 +28,13 @@ object Main extends Logging {
   }
 
   private def runAllServices() {
-    new DataPrepareService().run()
     new FieldsCalculationService().run()
     new ScoreService().run()
     new CreditService().run()
   }
 
-  private def stopSparkContext() = {
+  private def closeResources() = {
+    MQAgent.close()
     Contexts.stopSparkContext()
   }
 
@@ -55,5 +55,10 @@ object Main extends Logging {
     if (Constants.App.ERROR_LOG.toString != "") {
       logError(Utils.logWrapper(s"程序在运行过程中遇到了如下错误：${Constants.App.ERROR_LOG.toString}"))
     }
+  }
+
+  private def printEndLogs(startTime: Long): Unit = {
+    printErrorLogsIfExist()
+    printRunningTime(startTime: Long)
   }
 }

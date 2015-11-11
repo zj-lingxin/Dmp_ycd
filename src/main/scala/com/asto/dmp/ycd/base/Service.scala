@@ -2,10 +2,11 @@ package com.asto.dmp.ycd.base
 
 import com.asto.dmp.ycd.util.Utils
 import com.asto.dmp.ycd.util.mail.MailAgent
+import com.sun.prism.impl.BaseContext
 import org.apache.spark.Logging
 
 trait Service extends Logging {
-
+  protected val sqlContext = Contexts.sqlContext
   protected var mailSubject: String = s"${getClass.getSimpleName}的run()方法出现异常"
 
   protected def handlingExceptions(t: Throwable) {

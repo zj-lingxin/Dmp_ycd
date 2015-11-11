@@ -23,8 +23,6 @@ object Constants {
     private val DIR = s"${App.HADOOP_DIR}/input"
     val ORDER_DETAILS = s"$DIR/tobacco_order_details/*"
     val TOBACCO_PRICE = s"$DIR/tobacco_price/*"
-    //整合了ORDER_DETAILS和TOBACCO_PRICE的信息
-    val TEMP_ORDER = s"$DIR/full_fields_order"
   }
 
   /** 输出文件路径 **/
@@ -42,12 +40,12 @@ object Constants {
 
   /** 表的模式 **/
   object Schema {
-    //烟草订单详情：城市,店铺id,订单号,订货日期,卷烟名称,批发价,要货量(想要多少货),订货量(厂家给的货，也就是实际拿到的货),金额,生产厂家(与TOBACCO_PRICE中的冗余)
+    //烟草订单详情：城市,店铺id,订单号,订货日期,卷烟名称,批发价,要货量(想要多少货),订货量(厂家给的货，也就是实际拿到的货),金额,生产厂家
     val ORDER_DETAILS = "store_id,order_id,order_date,cigar_name,wholesale_price,purchase_amount,order_amount,money_amount,producer_name"
     //卷烟名称,品牌系列,零售指导价(元/条),生产厂家
     val TOBACCO_PRICE = "cigar_name,cigar_brand,retail_price,producer_name"
-    //烟草订单详情：           城市,   店铺id,   订单号,   订货日期,       卷烟名称,（单条烟的）批发价|成本价,要货量(想要多少货),订货量(厂家给的货，也就是实际拿到的货),金额（要货量 * （单条烟的）批发价）,生产厂家(与TOBACCO_PRICE中的冗余)
-    val FULL_FIELDS_ORDER = "store_id,order_id,order_date,cigar_name,wholesale_price,purchase_amount,order_amount,money_amount,cigar_brand,retail_price,producer_name"
+    //ORDER_DETAILS和TOBACCO_PRICE关联的数据：城市, 店铺id, 订单号, 订货日期, 卷烟名称,（单条烟的）批发价|成本价,要货量(想要多少货),订货量(厂家给的货，也就是实际拿到的货),金额（要货量 * （单条烟的）批发价）,生产厂家
+    val ORDER = "store_id,order_id,order_date,cigar_name,wholesale_price,purchase_amount,order_amount,money_amount,cigar_brand,retail_price,producer_name"
   }
 
 }
