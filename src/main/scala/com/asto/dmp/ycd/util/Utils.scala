@@ -43,4 +43,83 @@ object Utils {
     BigDecimal(number).setScale(bits, BigDecimal.RoundingMode.HALF_UP).doubleValue()
   }
 
+  implicit class EnrichedWithToTuple[A](elements: Seq[A]) {
+
+    def toTuple2 = elements match {
+      case Seq(a, b) => (a, b)
+    }
+
+    def toTuple3 = elements match {
+      case Seq(a, b, c) => (a, b, c)
+    }
+
+    def toTuple4 = elements match {
+      case Seq(a, b, c, d) => (a, b, c, d)
+    }
+
+    def toTuple5 = elements match {
+      case Seq(a, b, c, d, e) => (a, b, c, d, e)
+    }
+
+    def toTuple6 = elements match {
+      case Seq(a, b, c, d, e, f) => (a, b, c, d, e, f)
+    }
+
+    def toTuple7 = elements match {
+      case Seq(a, b, c, d, e, f, g) => (a, b, c, d, e, f, g)
+    }
+
+    def toTuple8 = elements match {
+      case Seq(a, b, c, d, e, f, g, h) => (a, b, c, d, e, f, g, h)
+    }
+
+    def toTuple9 = elements match {
+      case Seq(a, b, c, d, e, f, g, h, i) => (a, b, c, d, e, f, g, h, i)
+    }
+
+    def toTuple10 = elements match {
+      case Seq(a, b, c, d, e, f, g, h, i, j) => (a, b, c, d, e, f, g, h, i, j)
+    }
+
+    def toTuple11 = elements match {
+      case Seq(a, b, c, d, e, f, g, h, i, j, k) => (a, b, c, d, e, f, g, h, i, j, k)
+    }
+
+    def toTuple12 = elements match {
+      case Seq(a, b, c, d, e, f, g, h, i, j, k, l) => (a, b, c, d, e, f, g, h, i, j, k, l)
+    }
+
+    def toTuple13 = elements match {
+      case Seq(a, b, c, d, e, f, g, h, i, j, k, l, m) => (a, b, c, d, e, f, g, h, i, j, k, l, m)
+    }
+
+    def toTuple14 = elements match {
+      case Seq(a, b, c, d, e, f, g, h, i, j, k, l, m, n) => (a, b, c, d, e, f, g, h, i, j, k, l, m, n)
+    }
+
+    def toTuple15 = elements match {
+      case Seq(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o) => (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o)
+    }
+
+    def toTuple16 = elements match {
+      case Seq(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) => (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
+    }
+
+    def toTuple17 = elements match {
+      case Seq(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q) => (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q)
+    }
+
+    def toTuple18 = elements match {
+      case Seq(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r) => (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r)
+    }
+
+    def toTuple19 = elements match {
+      case Seq(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s) => (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s)
+    }
+
+    def toTuple20 = elements match {
+      case Seq(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t) => (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t)
+    }
+  }
+
 }
