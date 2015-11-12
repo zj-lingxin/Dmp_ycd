@@ -30,7 +30,7 @@ object CreditService extends org.apache.spark.Logging {
    * 店铺id	，近12月月均提货额	，评分，评分对应系数，授信额度
    */
   def getAmountOfCredit = {
-    BizDao.payMoneyAnnAvg
+    BizDao.moneyAmountAnnAvg
       .leftOuterJoin(ScoreService.getAllScore.map(t => (t._1, t._7)))
       .map(t => (t._1, t._2._1, t._2._2.get, getScoreCoefficient(t._2._2.get.toString.toInt), Math.min(maxAmountOfCredit, Utils.retainDecimal(getScoreCoefficient(t._2._2.get) * t._2._1, 0).toLong))).cache()
   }
@@ -50,9 +50,8 @@ object CreditService extends org.apache.spark.Logging {
 
 class CreditService extends Service {
   override protected def runServices(): Unit = {
-    if (Constants.App.MQ_ENABLE) {
-      CreditService.sendMessageToMQ()
-    }
+
+    CreditService.sendMessageToMQ()
     FileUtils.saveAsTextFile(CreditService.getAmountOfCredit, Constants.OutputPath.CREDIT)
   }
 }

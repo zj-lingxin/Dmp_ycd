@@ -4,7 +4,7 @@ import com.asto.dmp.ycd.base.Constants
 import com.asto.dmp.ycd.dao.impl.BizDao
 import com.asto.dmp.ycd.mq.{Msg, MQAgent}
 import com.asto.dmp.ycd.service.Service
-import com.asto.dmp.ycd.util.FileUtils
+import scala.collection._
 
 object FieldsCalculationService {
   /**
@@ -15,7 +15,7 @@ object FieldsCalculationService {
    * 中文：(店铺id,经营期限（月）,订货额年均值,订货条数年均值,每条均价年均值,当前月活跃品类,近1年毛利率,月销售增长比,销售额租金比,品类集中度,线下商圈指数)
    */
   def getCalcFields = {
-    BizDao.monthsNumFromEarliestOrder.leftOuterJoin(BizDao.payMoneyAnnAvg)
+    BizDao.monthsNumFromEarliestOrder.leftOuterJoin(BizDao.moneyAmountAnnAvg)
       .map(t => (t._1, (t._2._1, t._2._2.get)))
       .leftOuterJoin(BizDao.orderAmountAnnAvg)
       .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._2.get))) // monthsNumFromEarliestOrder,payMoneyAnnAvg,orderAmountAnnAvg
@@ -35,10 +35,13 @@ object FieldsCalculationService {
       .map(t => (t._1, t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._1._5, t._2._1._6, t._2._1._7, t._2._1._8, t._2._1._9, t._2._2.get))
   }
 
-  def sendIndexesToMQ() {
+  /**
+   * 向MQ发送各项指标
+   */
+  private def sendIndexes() {
     val fields = FieldsCalculationService.getCalcFields.map(t => (t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11)).collect()(0)
     MQAgent.send(
-      "indexes",
+      "各项指标",
       Msg("M_MONTHS_NUM_FROM_CREATED", fields._1), //经营期限（月）
       Msg("Y_PAY_MONEY_ANN_AVG", fields._2), //订货额年均值
       Msg("Y_ORDER_AMOUNT_ANN_AVG", fields._3), //订货条数年均值
@@ -51,16 +54,89 @@ object FieldsCalculationService {
       Msg("M_OFFLINE_SHOPPING_DISTRICT_INDEX", fields._10) //线下商圈指数
     )
   }
+
+  /**
+   * 向MQ发送月订货额
+   */
+  private def sendMoneyAmount() = {
+    MQAgent.send(
+      "订货额",
+      for(elem <- BizDao.moneyAmountPerMonth.collect().toList) yield Msg("M_PAY_MONEY", elem ._2, "2", elem ._1)
+    )
+  }
+
+  /**
+   * 向MQ发送月订货条数
+   */
+  private def sendOrderAmount() = {
+    MQAgent.send(
+      "订货条数",
+      for(elem <- BizDao.orderAmountPerMonth.collect().toList) yield Msg("M_ORDER_BRANCHES_AMOUNT", elem._2, "2", elem._1)
+    )
+  }
+
+  /**
+   * 发送月订货品类数
+   */
+  private def sendCategory() = {
+    MQAgent.send(
+      "订货品类数",
+      for(elem <- BizDao.categoryPerMonth) yield Msg("M_CATEGORY_AMOUNT", elem._2, "2", elem._1)
+    )
+  }
+
+  /**
+   * 发送月订货次数
+   * priv
+   */
+  private def sendOrderNumber() = {
+    MQAgent.send(
+      "订货次数",
+      for(elem <- BizDao.orderNumberPerMonth) yield Msg("M_ORDER_TIMES_AMOUNT", elem._2, "2", elem._1)
+    )
+  }
+
+  /**
+   * 发送每条均价
+   */
+  private def sendPerCigarPrice() = {
+    MQAgent.send(
+      "每条均价",
+      for(elem <- BizDao.perCigarPricePerMonth) yield Msg("M_PER_CIGAR_PRICE", elem._2, "2", elem._1)
+    )
+  }
+
+  private def sendActiveCategory() = {
+      MQAgent.send(
+        "活跃品类",
+        (
+          for (elem <- BizDao.getActiveCategoryFor(Constants.App.STORE_ID, (1, 12))) yield {
+            Msg("M_ACTIVE_CATEGORY", elem._3, "2", elem._2)
+          }
+        ).toList
+      )
+
+  }
+
+  def sendMessageToMQ() = {
+    sendMoneyAmount()
+    sendIndexes()
+    sendOrderAmount()
+    sendCategory()
+    sendOrderNumber()
+    sendPerCigarPrice()
+   /* sendActiveCategory()*/
+  }
 }
 
 class FieldsCalculationService extends Service {
   override protected def runServices(): Unit = {
-    if (Constants.App.MQ_ENABLE) {
-      FieldsCalculationService.sendIndexesToMQ()
-    }
-    FileUtils.saveAsTextFile(BizDao.grossMarginPerMonthCategory, Constants.OutputPath.GROSS_MARGIN_PER_MONTH_CATEGORY)
-    FileUtils.saveAsTextFile(BizDao.grossMarginPerMonthAll, Constants.OutputPath.GROSS_MARGIN_PER_MONTH_ALL)
-    FileUtils.saveAsTextFile(BizDao.getActiveCategoryInLast12Months, Constants.OutputPath.ACTIVE_CATEGORY)
-    FileUtils.saveAsTextFile(FieldsCalculationService.getCalcFields, Constants.OutputPath.FIELD)
+
+    FieldsCalculationService.sendMessageToMQ()
+
+    /* FileUtils.saveAsTextFile(BizDao.grossMarginPerMonthCategory, Constants.OutputPath.GROSS_MARGIN_PER_MONTH_CATEGORY)
+     FileUtils.saveAsTextFile(BizDao.grossMarginPerMonthAll, Constants.OutputPath.GROSS_MARGIN_PER_MONTH_ALL)
+     FileUtils.saveAsTextFile(BizDao.getActiveCategoryInLast12Months, Constants.OutputPath.ACTIVE_CATEGORY)*/
+    /*FileUtils.saveAsTextFile(FieldsCalculationService.getCalcFields, Constants.OutputPath.FIELD)*/
   }
 }

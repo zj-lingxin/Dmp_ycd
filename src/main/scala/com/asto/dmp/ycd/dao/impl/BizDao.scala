@@ -1,6 +1,6 @@
 package com.asto.dmp.ycd.dao.impl
 
-import com.asto.dmp.ycd.base.Contexts
+import com.asto.dmp.ycd.base.{Constants, Contexts}
 import com.asto.dmp.ycd.dao.SQL
 import com.asto.dmp.ycd.util.{BizUtils, DateUtils, Utils}
 
@@ -20,7 +20,7 @@ object BizDao {
    * 订货额年均值 = 近12个月（不含贷款当前月）“金额”字段，金额之和/12
    * 返回的元素,如：(33010120120716288A,68260)
    */
-  def payMoneyAnnAvg = lastMonthsAvg("store_id,money_amount", 12).persist()
+  def moneyAmountAnnAvg = lastMonthsAvg("store_id,money_amount", 12).persist()
 
   /**
    * 订货条数年均值 = 近12个月（不含贷款当前月）“订货量”字段，订货量之和/12、
@@ -74,16 +74,58 @@ object BizDao {
    */
   def getActiveCategoryInLast12Months = {
     val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()
-    storeIdArray.foreach(list ++= getActiveCategoryInLast12MonthsFor(_))
+    storeIdArray.foreach(list ++= getActiveCategoryFor(_, (0,11)))
     Contexts.sparkContext.parallelize(list)
   }
 
-  private def getActiveCategoryInLast12MonthsFor(licenseNo: String) = {
+  /**
+   * 近12个月，每个月的订货额
+   */
+  def moneyAmountPerMonth = {
+    selectLastMonthsData(s"order_date,money_amount", 12)
+      .map(a => (DateUtils.cutYearMonth(a(0).toString),a(1).toString.toDouble))
+      .groupByKey()
+      .map(t => (t._1, Utils.retainDecimal(t._2.sum, 2))).cache()
+  }
+
+  /**
+   * 近12个月，每个月的订货条数
+   */
+  def orderAmountPerMonth = {
+    selectLastMonthsData(s"order_date,order_amount", 12)
+      .map(a => (DateUtils.cutYearMonth(a(0).toString),a(1).toString.toInt))
+      .groupByKey()
+      .map(t => (t._1, t._2.sum)).cache()
+  }
+
+  /**
+   * 近12个月，每个月的订货品类数
+   */
+  def categoryPerMonth = {
+    selectLastMonthsData("order_date,cigar_name", 12).map(a => (DateUtils.cutYearMonth(a(0).toString),a(1).toString)).distinct().map(t => t._1).countByValue().toList.sorted.reverse
+  }
+
+  /**
+   * 近12个月，每个月的订货次数
+   */
+  def orderNumberPerMonth = {
+    selectLastMonthsData("order_date,order_id", 12).map(a => (DateUtils.cutYearMonth(a(0).toString),a(1).toString)).distinct().map(t => t._1).countByValue().toList.sorted.reverse
+  }
+
+  /**
+   * 近12个月，每条均价
+   */
+  def perCigarPricePerMonth = {
+    moneyAmountPerMonth.leftOuterJoin(orderAmountPerMonth).map(t => (t._1, Utils.retainDecimal(t._2._1 / t._2._2.get, 2))).collect().toList.sorted.reverse
+  }
+
+  def getActiveCategoryFor(storeId: String, timeRange:(Int,Int)) = {
+    println("~~~~~~~~~~~~~~~~~~~~~~ once ~~~~~~~~~~~~~~~~~~~~~~~~~~")
     val monthsNumFromEarliestOrderMap = monthsNumFromEarliestOrder.collect().toMap[String, Int]
-    val monthNum = Math.min(monthsNumFromEarliestOrderMap(licenseNo), 14)
+    val monthNum = Math.min(monthsNumFromEarliestOrderMap(storeId), 14)
     val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()
-    (0 to 11).toStream.takeWhile(m => (m + 3) <= monthNum).foreach {
-      m => list += Tuple3(licenseNo, DateUtils.monthsAgo(m, "yyyy-MM"), countNumbersOfActiveCategoryForMonth(m, licenseNo))
+    (timeRange._1 to timeRange._2).toStream.takeWhile(m => (m + 3) <= monthNum).foreach {
+      m => list += Tuple3(storeId, DateUtils.monthsAgo(m, "yyyy-MM"), countNumbersOfActiveCategoryForMonth(m, storeId))
     }
     list
   }
@@ -102,8 +144,8 @@ object BizDao {
       .map(t => (t._1,t._2.sum)).persist()
   }
 
-  private def countNumbersOfActiveCategoryForMonth(m: Int, licenseNo: String) = {
-    BaseDao.getOrderProps(SQL().select("cigar_name,order_date,order_amount").where(s" order_date >= '${DateUtils.monthsAgo(m + 3, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(m, "yyyy-MM-01")}' and store_id = '$licenseNo'"))
+   def countNumbersOfActiveCategoryForMonth(m: Int, storeId: String) = {
+    BaseDao.getOrderProps(SQL().select("cigar_name,order_date,order_amount").where(s" order_date >= '${DateUtils.monthsAgo(m + 3, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(m, "yyyy-MM-01")}' and store_id = '$storeId'"))
       .map(a => (a(0).toString, a(2).toString.toInt))
       .groupByKey()
       .map(t => (t._1, t._2.sum))
@@ -171,12 +213,12 @@ object BizDao {
   }
 
   /**
-   * 如果实际月数小于monthsNums，那么取实际的那个月份数
+   * 如果实际月数小于monthsNum，那么取实际的那个月份数
    */
-  private def lastMonthsActualAvg(monthsNums: Int) = {
-    lastMonthsSum("store_id,money_amount", monthsNums)
+  private def lastMonthsActualAvg(monthsNum: Int) = {
+    lastMonthsSum("store_id,money_amount", monthsNum)
       .leftOuterJoin(monthsNumFromEarliestOrder)
-      .map(t => (t._1, t._2._1, Math.min(t._2._2.getOrElse(0), monthsNums)))
+      .map(t => (t._1, t._2._1, Math.min(t._2._2.getOrElse(0), monthsNum)))
       .map(t => (t._1, t._2 / t._3))
   }
 

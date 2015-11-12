@@ -27,7 +27,11 @@ object MQAgent extends Logging {
   }
 
   def send(quotaItemName: String, msg: Msg *): Unit = {
-    MQAgent.send(Msg.getJson(quotaItemName, msg.toList))
+    send(quotaItemName: String, msg.toList)
+  }
+
+  def send(quotaItemName: String, msg: List[Msg]): Unit = {
+    MQAgent.send(Msg.getJson(quotaItemName, msg))
   }
 
   def close() {

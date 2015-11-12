@@ -97,7 +97,7 @@ object ScoreService {
    * 中文：(店铺id  ,(   订货额年均值绩点,      订货条数年均值绩点))
    */
   private def getScaleGPA = {
-    val payMoneyAnnAvgGPA = BizDao.payMoneyAnnAvg
+    val payMoneyAnnAvgGPA = BizDao.moneyAmountAnnAvg
       .map(t => (t._1, calcPayMoneyAnnAvgGPA(t._2)))
 
     val orderAmountAnnAvgGPA = BizDao.orderAmountAnnAvg
@@ -215,9 +215,7 @@ object ScoreService {
  */
 class ScoreService extends Service {
   override def runServices() = {
-    if (Constants.App.MQ_ENABLE) {
-      ScoreService.sendScoresToMQ()
-    }
+    ScoreService.sendScoresToMQ()
     FileUtils.saveAsTextFile(ScoreService.getResultGPA, Constants.OutputPath.GPA)
     FileUtils.saveAsTextFile(ScoreService.getAllScore, Constants.OutputPath.SCORE)
   }
