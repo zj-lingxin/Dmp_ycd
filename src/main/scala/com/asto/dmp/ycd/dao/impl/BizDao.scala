@@ -1,6 +1,6 @@
 package com.asto.dmp.ycd.dao.impl
 
-import com.asto.dmp.ycd.base.{Constants, Contexts}
+import com.asto.dmp.ycd.base.Contexts
 import com.asto.dmp.ycd.dao.SQL
 import com.asto.dmp.ycd.util.{BizUtils, DateUtils, Utils}
 
@@ -120,7 +120,6 @@ object BizDao {
   }
 
   def getActiveCategoryFor(storeId: String, timeRange:(Int,Int)) = {
-    println("~~~~~~~~~~~~~~~~~~~~~~ once ~~~~~~~~~~~~~~~~~~~~~~~~~~")
     val monthsNumFromEarliestOrderMap = monthsNumFromEarliestOrder.collect().toMap[String, Int]
     val monthNum = Math.min(monthsNumFromEarliestOrderMap(storeId), 14)
     val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()

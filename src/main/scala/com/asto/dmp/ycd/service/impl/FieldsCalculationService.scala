@@ -4,7 +4,7 @@ import com.asto.dmp.ycd.base.Constants
 import com.asto.dmp.ycd.dao.impl.BizDao
 import com.asto.dmp.ycd.mq.{Msg, MQAgent}
 import com.asto.dmp.ycd.service.Service
-import scala.collection._
+
 
 object FieldsCalculationService {
   /**
@@ -115,28 +115,28 @@ object FieldsCalculationService {
           }
         ).toList
       )
-
   }
 
-  def sendMessageToMQ() = {
+
+  private def sendMessageToMQ() = {
     sendMoneyAmount()
     sendIndexes()
     sendOrderAmount()
     sendCategory()
     sendOrderNumber()
     sendPerCigarPrice()
-   /* sendActiveCategory()*/
+    sendActiveCategory()
   }
 }
 
 class FieldsCalculationService extends Service {
   override protected def runServices(): Unit = {
-
     FieldsCalculationService.sendMessageToMQ()
-
-    /* FileUtils.saveAsTextFile(BizDao.grossMarginPerMonthCategory, Constants.OutputPath.GROSS_MARGIN_PER_MONTH_CATEGORY)
+    /*
+     FileUtils.saveAsTextFile(BizDao.grossMarginPerMonthCategory, Constants.OutputPath.GROSS_MARGIN_PER_MONTH_CATEGORY)
      FileUtils.saveAsTextFile(BizDao.grossMarginPerMonthAll, Constants.OutputPath.GROSS_MARGIN_PER_MONTH_ALL)
-     FileUtils.saveAsTextFile(BizDao.getActiveCategoryInLast12Months, Constants.OutputPath.ACTIVE_CATEGORY)*/
-    /*FileUtils.saveAsTextFile(FieldsCalculationService.getCalcFields, Constants.OutputPath.FIELD)*/
+     FileUtils.saveAsTextFile(BizDao.getActiveCategoryInLast12Months, Constants.OutputPath.ACTIVE_CATEGORY)
+     FileUtils.saveAsTextFile(FieldsCalculationService.getCalcFields, Constants.OutputPath.FIELD)
+     */
   }
 }

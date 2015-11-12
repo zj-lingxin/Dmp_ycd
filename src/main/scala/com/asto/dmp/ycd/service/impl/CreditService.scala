@@ -41,7 +41,7 @@ object CreditService extends org.apache.spark.Logging {
   def sendMessageToMQ() {
     val amountOfCreditArray = getAmountOfCredit.collect()(0)
     MQAgent.send(
-      "scoreAndAmount",
+      "总得分和授信额度",
       Msg("M_PROP_CREDIT_SCORE", amountOfCreditArray._3, "1"),
       Msg("M_PROP_CREDIT_LIMIT_AMOUNT", amountOfCreditArray._5, "1")
     )
@@ -50,7 +50,6 @@ object CreditService extends org.apache.spark.Logging {
 
 class CreditService extends Service {
   override protected def runServices(): Unit = {
-
     CreditService.sendMessageToMQ()
     FileUtils.saveAsTextFile(CreditService.getAmountOfCredit, Constants.OutputPath.CREDIT)
   }

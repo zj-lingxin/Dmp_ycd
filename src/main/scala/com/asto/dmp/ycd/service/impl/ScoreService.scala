@@ -199,7 +199,7 @@ object ScoreService {
   def sendScoresToMQ() {
     val scores = getAllScore.map(t => (t._2, t._3, t._4, t._5, t._6, t._7)).collect()(0)
     MQAgent.send(
-      "scores",
+      "得分",
       Msg("M_SCALE_SCORE", scores._1),
       Msg("M_PROFIT_SCORE", scores._2),
       Msg("M_GROWING_UP_SCORE", scores._3),
@@ -216,7 +216,7 @@ object ScoreService {
 class ScoreService extends Service {
   override def runServices() = {
     ScoreService.sendScoresToMQ()
-    FileUtils.saveAsTextFile(ScoreService.getResultGPA, Constants.OutputPath.GPA)
+    /*FileUtils.saveAsTextFile(ScoreService.getResultGPA, Constants.OutputPath.GPA)*/
     FileUtils.saveAsTextFile(ScoreService.getAllScore, Constants.OutputPath.SCORE)
   }
 }

@@ -1,6 +1,5 @@
 package com.asto.dmp.ycd.base
 
-import com.asto.dmp.ycd.dao.impl.BizDao
 import com.asto.dmp.ycd.mq.MQAgent
 import com.asto.dmp.ycd.service.impl.{ScoreService, FieldsCalculationService, CreditService}
 import com.asto.dmp.ycd.util.{DateUtils, Utils}
@@ -9,7 +8,7 @@ import org.apache.spark.Logging
 object Main extends Logging {
   def main(args: Array[String]) {
     val startTime = System.currentTimeMillis()
-    if(argsIsIllegal(args)) return
+    if (argsIsIllegal(args)) return
     useArgs(args)
     runAllServices()
     closeResources()
@@ -30,11 +29,9 @@ object Main extends Logging {
    * 运行所有的模型
    */
   private def runAllServices() {
-
-
-   new FieldsCalculationService().run()
-    /*  new ScoreService().run()
-     new CreditService().run()*/
+    new FieldsCalculationService().run()
+    new ScoreService().run()
+    new CreditService().run()
   }
 
   /**
