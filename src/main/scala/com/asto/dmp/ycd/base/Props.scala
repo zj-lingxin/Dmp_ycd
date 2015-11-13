@@ -17,7 +17,6 @@ object Props extends Logging {
     if (externalPropertiesExist) {
       logInfo(Utils.logWrapper(s"配置文件：${System.getProperty("PropPath")}"))
       System.getProperty("PropPath")
-
     } else {
       logInfo(Utils.logWrapper(s"配置文件：${getClass().getResource("/").getPath() + "prop.properties"}"))
       getClass().getResource("/").getPath() + "prop.properties"

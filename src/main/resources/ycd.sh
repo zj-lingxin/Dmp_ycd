@@ -22,7 +22,7 @@ if [ ! -d $PROJECT_LOG_HOME/$date_cur ];then
 
 echo "start!!"${store_id}" time:"${time_cur} >> $PROJECT_LOG_HOME/$date_cur/process.log
 
-#hdfs dfs -rm -r $HDFS_PATH/input/tobacco_order_details
+hdfs dfs -rm -r $HDFS_PATH/input/tobacco_order_details
 
 $SQOOP_HOME/bin/sqoop import --connect jdbc:mysql://192.168.7.7:3306/retail_loan --username root --password password --query 'SELECT store_id,order_id,order_date,cigar_name,wholesale_price,purchase_amount,order_amount,money_amount,producer_name FROM  datag_yancao_historyOrderDetailData WHERE store_id = "'$store_id'" and $CONDITIONS '   -m 1  --target-dir $HDFS_PATH/input/tobacco_order_details --fields-terminated-by '\t' &> $PROJECT_LOG_HOME/$date_cur/sqoop_ycd[$store_id].log
 

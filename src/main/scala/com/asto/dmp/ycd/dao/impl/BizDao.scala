@@ -83,7 +83,7 @@ object BizDao {
    */
   def moneyAmountPerMonth = {
     selectLastMonthsData(s"order_date,money_amount", 12)
-      .map(a => (DateUtils.cutYearMonth(a(0).toString),a(1).toString.toDouble))
+      .map(a => (DateUtils.strToStr(a(0).toString,"yyyy-MM-dd","yyyyMM"),a(1).toString.toDouble))
       .groupByKey()
       .map(t => (t._1, Utils.retainDecimal(t._2.sum, 2))).cache()
   }
@@ -93,7 +93,7 @@ object BizDao {
    */
   def orderAmountPerMonth = {
     selectLastMonthsData(s"order_date,order_amount", 12)
-      .map(a => (DateUtils.cutYearMonth(a(0).toString),a(1).toString.toInt))
+      .map(a => (DateUtils.strToStr(a(0).toString,"yyyy-MM-dd","yyyyMM"),a(1).toString.toInt))
       .groupByKey()
       .map(t => (t._1, t._2.sum)).cache()
   }
@@ -102,14 +102,14 @@ object BizDao {
    * 近12个月，每个月的订货品类数
    */
   def categoryPerMonth = {
-    selectLastMonthsData("order_date,cigar_name", 12).map(a => (DateUtils.cutYearMonth(a(0).toString),a(1).toString)).distinct().map(t => t._1).countByValue().toList.sorted.reverse
+    selectLastMonthsData("order_date,cigar_name", 12).map(a => (DateUtils.strToStr(a(0).toString,"yyyy-MM-dd","yyyyMM"),a(1).toString)).distinct().map(t => t._1).countByValue().toList.sorted.reverse
   }
 
   /**
    * 近12个月，每个月的订货次数
    */
   def orderNumberPerMonth = {
-    selectLastMonthsData("order_date,order_id", 12).map(a => (DateUtils.cutYearMonth(a(0).toString),a(1).toString)).distinct().map(t => t._1).countByValue().toList.sorted.reverse
+    selectLastMonthsData("order_date,order_id", 12).map(a => (DateUtils.strToStr(a(0).toString,"yyyy-MM-dd","yyyyMM"),a(1).toString)).distinct().map(t => t._1).countByValue().toList.sorted.reverse
   }
 
   /**
@@ -124,7 +124,7 @@ object BizDao {
     val monthNum = Math.min(monthsNumFromEarliestOrderMap(storeId), 14)
     val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()
     (timeRange._1 to timeRange._2).toStream.takeWhile(m => (m + 3) <= monthNum).foreach {
-      m => list += Tuple3(storeId, DateUtils.monthsAgo(m, "yyyy-MM"), countNumbersOfActiveCategoryForMonth(m, storeId))
+      m => list += Tuple3(storeId, DateUtils.monthsAgo(m, "yyyyMM"), countNumbersOfActiveCategoryForMonth(m, storeId))
     }
     list
   }
