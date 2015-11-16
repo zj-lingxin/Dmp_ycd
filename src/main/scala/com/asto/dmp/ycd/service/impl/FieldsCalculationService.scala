@@ -59,21 +59,27 @@ object FieldsCalculationService {
    * 向MQ发送月订货额
    */
   private def sendMoneyAmount() = {
-    BizUtils.handleMessage(
+/*    BizUtils.handleMessage(
       MsgWrapper.getJson(
         "订货额",
         for(elem <- BizDao.moneyAmountPerMonth.collect().toList) yield Msg("M_PAY_MONEY", elem ._2, "2", elem ._1)
       )
-    )
+    )*/
   }
 
   /**
    * 向MQ发送月订货条数
    */
   private def sendOrderAmount() = {
-    BizUtils.handleMessage(
-      MsgWrapper.getJson("订货条数", for(elem <- BizDao.orderAmountPerMonth.collect().toList) yield Msg("M_ORDER_BRANCHES_AMOUNT", elem._2, "2", elem._1))
-    )
+    val allOrderAmountPerMonth = BizDao.orderAmountPerMonth.collect().toList.map(t => (t._1._1,(t._1._2,t._2))).groupBy(t => t._1)
+    allOrderAmountPerMonth.foreach { orderAmountPerMonth =>
+      BizUtils.handleMessage(
+        MsgWrapper.getJson("订货条数", for(elem <- orderAmountPerMonth._2) yield Msg("M_ORDER_BRANCHES_AMOUNT", elem._2._2, "2", elem._2._1), orderAmountPerMonth._1)
+      )
+    }
+/*    BizUtils.handleMessage(
+      MsgWrapper.getJson("订货条数", for(elem <- BizDao.orderAmountPerMonth.collect().toList) yield Msg("M_ORDER_BRANCHES_AMOUNT", elem._2, "2", elem._1._2))
+    )*/
   }
 
   /**
@@ -99,9 +105,9 @@ object FieldsCalculationService {
    * 发送每条均价
    */
   private def sendPerCigarPrice() = {
-    BizUtils.handleMessage(
+ /*   BizUtils.handleMessage(
       MsgWrapper.getJson("每条均价", for(elem <- BizDao.perCigarPricePerMonth) yield Msg("M_PER_CIGAR_PRICE", elem._2, "2", elem._1))
-    )
+    )*/
   }
 
   private def sendActiveCategory() = {
@@ -126,14 +132,14 @@ object FieldsCalculationService {
   }
 
   private def sendMessageToMQ() = {
-    sendMoneyAmount()
-    sendIndexes()
+   sendMoneyAmount()
+    /*   sendIndexes()*/
     sendOrderAmount()
-    sendCategory()
+/*    sendCategory()
     sendOrderNumber()
     sendPerCigarPrice()
     sendActiveCategory()
-    sendMoneyAmountTop5PerMonth()
+    sendMoneyAmountTop5PerMonth()*/
   }
 }
 

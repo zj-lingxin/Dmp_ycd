@@ -3,6 +3,7 @@ package com.asto.dmp.ycd.dao.impl
 import com.asto.dmp.ycd.base.Contexts
 import com.asto.dmp.ycd.dao.SQL
 import com.asto.dmp.ycd.util.{BizUtils, DateUtils, Utils}
+import groovy.lang.Tuple
 
 object BizDao {
 
@@ -82,20 +83,34 @@ object BizDao {
    * 近12个月，每个月的订货额
    */
   def moneyAmountPerMonth = {
-    selectLastMonthsData(s"order_date,money_amount", 12)
+    import Helper._
+    selectLastMonthsData(s"store_id,order_date,money_amount", 12)
+      .map(a => ((a(0).toString, DateUtils.strToStr(a(1).toString, "yyyy-MM-dd", "yyyyMM")), a(2).toString.toDouble))
+      .groupByKey()
+      .map(t => (t._1, Utils.retainDecimal(t._2.sum, 2))).sortBy(_._1).cache()
+
+  /*  selectLastMonthsData(s"order_date,money_amount", 12)
       .map(a => (DateUtils.strToStr(a(0).toString, "yyyy-MM-dd", "yyyyMM"), a(1).toString.toDouble))
       .groupByKey()
-      .map(t => (t._1, Utils.retainDecimal(t._2.sum, 2))).cache()
+      .map(t => (t._1, Utils.retainDecimal(t._2.sum, 2))).cache()*/
   }
+
+  /*  def moneyAmountPerMonth = {
+      selectLastMonthsData(s"order_date,money_amount", 12)
+        .map(a => (DateUtils.strToStr(a(0).toString, "yyyy-MM-dd", "yyyyMM"), a(1).toString.toDouble))
+        .groupByKey()
+        .map(t => (t._1, Utils.retainDecimal(t._2.sum, 2))).cache()
+    }*/
 
   /**
    * 近12个月，每个月的订货条数
    */
   def orderAmountPerMonth = {
-    selectLastMonthsData(s"order_date,order_amount", 12)
-      .map(a => (DateUtils.strToStr(a(0).toString, "yyyy-MM-dd", "yyyyMM"), a(1).toString.toInt))
+    import Helper._
+    selectLastMonthsData(s"store_id,order_date,order_amount", 12)
+      .map(a => ((a(0).toString, DateUtils.strToStr(a(1).toString, "yyyy-MM-dd", "yyyyMM")), a(2).toString.toInt))
       .groupByKey()
-      .map(t => (t._1, t._2.sum)).cache()
+      .map(t => (t._1, t._2.sum)).sortBy(_._1).cache()
   }
 
   /**
@@ -132,8 +147,8 @@ object BizDao {
     selectLastMonthsData("order_date,cigar_name,money_amount", 12)
       .map(a => ((DateUtils.strToStr(a(0).toString, "yyyy-MM-dd", "yyyyMM"), a(1).toString), a(2).toString.toDouble))
       .groupByKey()
-      .map(t => (t._1._1,(Utils.retainDecimal(t._2.sum, 2), t._1._2)))
-      .groupByKey().map(t => (t._1,t._2.toArray.sorted.reverse.take(5))).collect()
+      .map(t => (t._1._1, (Utils.retainDecimal(t._2.sum, 2), t._1._2)))
+      .groupByKey().map(t => (t._1, t._2.toArray.sorted.reverse.take(5))).collect()
   }
 
   def getActiveCategoryFor(storeId: String, timeRange: (Int, Int)) = {
@@ -300,5 +315,14 @@ object BizDao {
   def offlineShoppingDistrictIndex = {
     Contexts.sparkContext.parallelize(storeIdArray).map((_, 0.8D)).persist()
   }
+}
 
+object Helper {
+  implicit val storeIdAndOrderDateOrdering: Ordering[(String, String)] = new Ordering[(String, String)] {
+    override def compare(a: (String, String), b: (String, String)): Int =
+      if (a._1 > b._1) 1
+      else if (a._1 < b._1) -1
+      else if (a._2 > b._2) -1
+      else 1
+  }
 }

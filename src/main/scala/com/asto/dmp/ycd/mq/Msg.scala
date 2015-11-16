@@ -5,10 +5,10 @@ import com.asto.dmp.ycd.util.DateUtils
 import scala.util.parsing.json.{JSONArray, JSONObject}
 
 object MsgWrapper {
-  def getJson(quotaItemName: String, msgList: List[Msg]): String = {
+  def getJson(quotaItemName: String, msgList: List[Msg], propertyUuid: String = Constants.App.STORE_ID): String = {
     new JSONObject(Map(
       "quotaItemName" -> quotaItemName,
-      "propertyUuid" -> Constants.App.STORE_ID,
+      "propertyUuid" -> propertyUuid,
       "quotaItemList" -> JSONArray(for (msg <- msgList) yield matchMsgType(msg))
     )).toString()
   }

@@ -8,7 +8,7 @@ object Constants {
     val LOG_WRAPPER = "##########"
     val YEAR_MONTH_DAY_FORMAT = "yyyy-MM-dd"
     val YEAR_MONTH_FORMAT = "yyyy-MM"
-    val DIR = s"${Hadoop.DEFAULT_FS}/ycd/online"
+    val DIR = s"${Hadoop.DEFAULT_FS}/ycd/"
     var TODAY: String = _
     var STORE_ID: String = _
     var TIMESTAMP: Long = _
@@ -23,16 +23,22 @@ object Constants {
   /** 输入文件路径 **/
   object InputPath {
     val SEPARATOR = "\t"
+    //共用
     val TOBACCO_PRICE = s"${App.DIR}/input/tobacco_price/*"
-    private val DIR = s"${App.DIR}/input/${App.TODAY}/${App.STORE_ID}_${App.TIMESTAMP}"
-    val ORDER_DETAILS = s"$DIR/tobacco_order_details/*"
+    //在线
+    private val ONLINE_DIR = s"${App.DIR}/input/online/${App.TODAY}/${App.STORE_ID}_${App.TIMESTAMP}"
+    val ORDER_DETAILS_ONLINE = s"$ONLINE_DIR/tobacco_order_details/*"
+    //离线
+    private val OFFLINE_DIR = s"${App.DIR}/input/offline/${App.TODAY}"
+    val ORDER_DETAILS_OFFLINE = s"$OFFLINE_DIR/tobacco_order_details/*"
   }
+  
 
   /** 输出文件路径 **/
   object OutputPath {
     val SEPARATOR = "\t"
-    private val DIR = s"${App.DIR}/output/${App.TODAY}/${App.STORE_ID}_${App.TIMESTAMP}"
-    val MESSAGES_PATH = s"$DIR/messages"
+    private val ONLINE_DIR = s"${App.DIR}/output/online/${App.TODAY}/${App.STORE_ID}_${App.TIMESTAMP}"
+    val MESSAGES_PATH_ONLINE = s"$ONLINE_DIR/messages"
   }
 
   /** 表的模式 **/

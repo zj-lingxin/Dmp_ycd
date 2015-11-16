@@ -1,5 +1,6 @@
 package com.asto.dmp.ycd.base
 
+import com.asto.dmp.ycd.dao.impl.BizDao
 import com.asto.dmp.ycd.mq.MQAgent
 import com.asto.dmp.ycd.service.impl.{ScoreService, FieldsCalculationService, CreditService}
 import com.asto.dmp.ycd.util.{FileUtils, DateUtils, Utils}
@@ -20,10 +21,10 @@ object Main extends Logging {
    * 对传入的参数进行赋值
    */
   private def useArgs(args: Array[String]) {
-    Constants.App.STORE_ID = args(0)
-    Constants.App.TIMESTAMP = args(1).toLong
+    Constants.App.TIMESTAMP = args(0).toLong
+    if (args.length == 2) Constants.App.STORE_ID = args(1)
     //从外部传入的是秒级别的时间戳，所以要乘以1000
-    Constants.App.TODAY = DateUtils.timestampToStr(args(1).toLong * 1000, "yyyyMM/dd")
+    Constants.App.TODAY = DateUtils.timestampToStr(Constants.App.TIMESTAMP * 1000, "yyyyMM/dd")
   }
 
   /**
@@ -31,8 +32,8 @@ object Main extends Logging {
    */
   private def runAllServices() {
     new FieldsCalculationService().run()
-    new ScoreService().run()
-    new CreditService().run()
+/*    new ScoreService().run()
+    new CreditService().run()*/
   }
 
   /**
@@ -47,8 +48,8 @@ object Main extends Logging {
    * 判断传入的参数是否合法
    */
   private def argsIsIllegal(args: Array[String]) = {
-    if (Option(args).isEmpty || args.length < 2) {
-      logError(Utils.logWrapper("请传入程序参数: 店铺id[args(0)]、 时间戳[args(1)]"))
+    if (Option(args).isEmpty || args.length <= 0 || args.length >= 3) {
+      logError(Utils.logWrapper("请传入程序参数:时间戳[args(0)]、店铺id[args(1)](可选)"))
       true
     } else {
       false
@@ -81,6 +82,6 @@ object Main extends Logging {
   }
 
   private def saveMessages() = {
-    FileUtils.saveAsTextFile(Constants.App.MESSAGES.toString, Constants.OutputPath.MESSAGES_PATH)
+    FileUtils.saveAsTextFile(Constants.App.MESSAGES.toString, Constants.OutputPath.MESSAGES_PATH_ONLINE)
   }
 }
