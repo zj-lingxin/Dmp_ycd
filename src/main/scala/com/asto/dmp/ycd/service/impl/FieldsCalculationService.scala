@@ -2,10 +2,8 @@ package com.asto.dmp.ycd.service.impl
 
 import com.asto.dmp.ycd.base.Constants
 import com.asto.dmp.ycd.dao.impl.BizDao
-import com.asto.dmp.ycd.mq.{Msg, MQAgent}
+import com.asto.dmp.ycd.mq.{MsgWithName, Msg, MQAgent}
 import com.asto.dmp.ycd.service.Service
-import com.asto.dmp.ycd.util.DateUtils
-
 
 object FieldsCalculationService {
   /**
@@ -108,16 +106,27 @@ object FieldsCalculationService {
   }
 
   private def sendActiveCategory() = {
-      MQAgent.send(
-        "活跃品类",
-        (
-          for (elem <- BizDao.getActiveCategoryFor(Constants.App.STORE_ID, (1, 12))) yield {
-            Msg("M_ACTIVE_CATEGORY", elem._3, "2", elem._2)
-          }
-        ).toList
-      )
+    MQAgent.send(
+      "活跃品类",
+      (
+        for (elem <- BizDao.getActiveCategoryFor(Constants.App.STORE_ID, (1, 12))) yield {
+          Msg("M_ACTIVE_CATEGORY", elem._3, "2", elem._2)
+        }
+      ).toList
+    )
   }
 
+  private def sendMoneyAmountTop5PerMonth() = {
+    val moneyAmountTop5PerMonth = BizDao.payMoneyTop5PerMonth
+    (0 to 4).foreach{ i =>
+      MQAgent.send(
+        s"近12个月订货额top${i+1}",
+        {
+          for(elem <- moneyAmountTop5PerMonth) yield MsgWithName(s"M_PAY_MONEY_TOP${i+1}",  elem._2(i)._2, elem._2(i)._1, "2", elem._1)
+        }.toList
+      )
+    }
+  }
 
   private def sendMessageToMQ() = {
     sendMoneyAmount()
@@ -127,6 +136,7 @@ object FieldsCalculationService {
     sendOrderNumber()
     sendPerCigarPrice()
     sendActiveCategory()
+    sendMoneyAmountTop5PerMonth()
   }
 }
 

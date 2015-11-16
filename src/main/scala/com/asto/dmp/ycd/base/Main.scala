@@ -1,5 +1,6 @@
 package com.asto.dmp.ycd.base
 
+import com.asto.dmp.ycd.dao.impl.BizDao
 import com.asto.dmp.ycd.mq.MQAgent
 import com.asto.dmp.ycd.service.impl.{ScoreService, FieldsCalculationService, CreditService}
 import com.asto.dmp.ycd.util.{DateUtils, Utils}
@@ -29,6 +30,7 @@ object Main extends Logging {
    * 运行所有的模型
    */
   private def runAllServices() {
+    BizDao.payMoneyTop5PerMonth
     new FieldsCalculationService().run()
     new ScoreService().run()
     new CreditService().run()
@@ -41,7 +43,6 @@ object Main extends Logging {
     MQAgent.close()
     Contexts.stopSparkContext()
   }
-
 
   /**
    * 判断传入的参数是否合法

@@ -4,6 +4,8 @@ import com.asto.dmp.ycd.base.Contexts
 import com.asto.dmp.ycd.dao.SQL
 import com.asto.dmp.ycd.util.{BizUtils, DateUtils, Utils}
 
+import scala.reflect.ClassTag
+
 object BizDao {
 
   /**
@@ -74,7 +76,7 @@ object BizDao {
    */
   def getActiveCategoryInLast12Months = {
     val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()
-    storeIdArray.foreach(list ++= getActiveCategoryFor(_, (0,11)))
+    storeIdArray.foreach(list ++= getActiveCategoryFor(_, (0, 11)))
     Contexts.sparkContext.parallelize(list)
   }
 
@@ -83,7 +85,7 @@ object BizDao {
    */
   def moneyAmountPerMonth = {
     selectLastMonthsData(s"order_date,money_amount", 12)
-      .map(a => (DateUtils.strToStr(a(0).toString,"yyyy-MM-dd","yyyyMM"),a(1).toString.toDouble))
+      .map(a => (DateUtils.strToStr(a(0).toString, "yyyy-MM-dd", "yyyyMM"), a(1).toString.toDouble))
       .groupByKey()
       .map(t => (t._1, Utils.retainDecimal(t._2.sum, 2))).cache()
   }
@@ -93,7 +95,7 @@ object BizDao {
    */
   def orderAmountPerMonth = {
     selectLastMonthsData(s"order_date,order_amount", 12)
-      .map(a => (DateUtils.strToStr(a(0).toString,"yyyy-MM-dd","yyyyMM"),a(1).toString.toInt))
+      .map(a => (DateUtils.strToStr(a(0).toString, "yyyy-MM-dd", "yyyyMM"), a(1).toString.toInt))
       .groupByKey()
       .map(t => (t._1, t._2.sum)).cache()
   }
@@ -102,14 +104,14 @@ object BizDao {
    * 近12个月，每个月的订货品类数
    */
   def categoryPerMonth = {
-    selectLastMonthsData("order_date,cigar_name", 12).map(a => (DateUtils.strToStr(a(0).toString,"yyyy-MM-dd","yyyyMM"),a(1).toString)).distinct().map(t => t._1).countByValue().toList.sorted.reverse
+    selectLastMonthsData("order_date,cigar_name", 12).map(a => (DateUtils.strToStr(a(0).toString, "yyyy-MM-dd", "yyyyMM"), a(1).toString)).distinct().map(t => t._1).countByValue().toList.sorted.reverse
   }
 
   /**
    * 近12个月，每个月的订货次数
    */
   def orderNumberPerMonth = {
-    selectLastMonthsData("order_date,order_id", 12).map(a => (DateUtils.strToStr(a(0).toString,"yyyy-MM-dd","yyyyMM"),a(1).toString)).distinct().map(t => t._1).countByValue().toList.sorted.reverse
+    selectLastMonthsData("order_date,order_id", 12).map(a => (DateUtils.strToStr(a(0).toString, "yyyy-MM-dd", "yyyyMM"), a(1).toString)).distinct().map(t => t._1).countByValue().toList.sorted.reverse
   }
 
   /**
@@ -119,7 +121,19 @@ object BizDao {
     moneyAmountPerMonth.leftOuterJoin(orderAmountPerMonth).map(t => (t._1, Utils.retainDecimal(t._2._1 / t._2._2.get, 2))).collect().toList.sorted.reverse
   }
 
-  def getActiveCategoryFor(storeId: String, timeRange:(Int,Int)) = {
+  /**
+   * 近12个月,订货额的top5
+   *
+   */
+  def payMoneyTop5PerMonth = {
+    selectLastMonthsData("order_date,cigar_name,money_amount", 12)
+      .map(a => ((DateUtils.strToStr(a(0).toString, "yyyy-MM-dd", "yyyyMM"), a(1).toString), Utils.retainDecimal(a(2).toString.toDouble, 2)))
+      .groupByKey()
+      .map(t => (t._1._1,(t._2.sum, t._1._2)))
+      .groupByKey().map(t => (t._1,t._2.toArray.sorted.reverse.take(5))).collect()
+  }
+
+  def getActiveCategoryFor(storeId: String, timeRange: (Int, Int)) = {
     val monthsNumFromEarliestOrderMap = monthsNumFromEarliestOrder.collect().toMap[String, Int]
     val monthNum = Math.min(monthsNumFromEarliestOrderMap(storeId), 14)
     val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()
@@ -134,16 +148,16 @@ object BizDao {
    */
   def getActiveCategoryInLastMonth = {
     BaseDao.getOrderProps(SQL().select("store_id,cigar_name,order_date,order_amount").where(s" order_date >= '${DateUtils.monthsAgo(3, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'"))
-      .map(a => ((a(0).toString,a(1).toString), a(3).toString.toInt))
+      .map(a => ((a(0).toString, a(1).toString), a(3).toString.toInt))
       .groupByKey()
       .map(t => (t._1, t._2.sum))
       .filter(t => t._2 >= 9)
-      .map(t => (t._1._1,1))
+      .map(t => (t._1._1, 1))
       .groupByKey()
-      .map(t => (t._1,t._2.sum)).persist()
+      .map(t => (t._1, t._2.sum)).persist()
   }
 
-   def countNumbersOfActiveCategoryForMonth(m: Int, storeId: String) = {
+  def countNumbersOfActiveCategoryForMonth(m: Int, storeId: String) = {
     BaseDao.getOrderProps(SQL().select("cigar_name,order_date,order_amount").where(s" order_date >= '${DateUtils.monthsAgo(m + 3, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(m, "yyyy-MM-01")}' and store_id = '$storeId'"))
       .map(a => (a(0).toString, a(2).toString.toInt))
       .groupByKey()
@@ -162,9 +176,9 @@ object BizDao {
       .groupByKey()
       .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
       .filter(t => t._2._1.toInt > 0 && t._2._2.toInt > 0)
-      .map(t => ((t._1._1,t._1._2, Utils.retainDecimal(1 - t._2._1 / t._2._2, 3)),t._1._3))
+      .map(t => ((t._1._1, t._1._2, Utils.retainDecimal(1 - t._2._1 / t._2._2, 3)), t._1._3))
       .collect()
-      .sortWith((a,b) => a._1.toString() > b._1.toString())
+      .sortWith((a, b) => a._1.toString() > b._1.toString())
       .map(t => (t._1._1, t._1._2, t._2, t._1._3))
     Contexts.sparkContext.parallelize(array)
   }
@@ -181,7 +195,7 @@ object BizDao {
       .groupByKey()
       .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
       .map(t => (t._1._1, t._1._2, Utils.retainDecimal(1 - t._2._1 / t._2._2, 3))) //((33010220120807247A,2015-01),0.18)
-      .collect().sortWith((a,b) => a.toString() > b.toString())
+      .collect().sortWith((a, b) => a.toString() > b.toString())
     Contexts.sparkContext.parallelize(array)
   }
 
@@ -271,16 +285,17 @@ object BizDao {
    * 暂时缺失数据，默认为0.6
    */
   def salesRentRatio = {
-    Contexts.sparkContext.parallelize(storeIdArray).map((_,0.6)).persist()
+    Contexts.sparkContext.parallelize(storeIdArray).map((_, 0.6)).persist()
   }
 
   def storeIdArray = BaseDao.getOrderProps(SQL().select("store_id")).map(a => a(0).toString).distinct().collect()
+
   /**
    * 线下商圈指数
    * 暂时缺失数据，默认为0.8
    */
   def offlineShoppingDistrictIndex = {
-    Contexts.sparkContext.parallelize(storeIdArray).map((_,0.8D)).persist()
+    Contexts.sparkContext.parallelize(storeIdArray).map((_, 0.8D)).persist()
   }
 
 }

@@ -93,7 +93,7 @@ object ScoreService {
 
   /**
    * 获取规模相关的绩点
-   * 返回：(licenseNo,(payMoneyAnnAvgGPA, orderAmountAnnAvgGPA))
+   * 返回：(storeId,(payMoneyAnnAvgGPA, orderAmountAnnAvgGPA))
    * 中文：(店铺id  ,(   订货额年均值绩点,      订货条数年均值绩点))
    */
   private def getScaleGPA = {
@@ -107,7 +107,7 @@ object ScoreService {
 
   /**
    * 获取盈利相关的绩点
-   * 返回：(licenseNo,(salesRentRatioGPA,grossMarginLastYearGPA))
+   * 返回：(storeId,(salesRentRatioGPA,grossMarginLastYearGPA))
    * 中文：(店铺id  ,(   销售额租金比绩点,           1年毛利率绩点))
    */
   private def getProfitGPA = {
@@ -120,7 +120,7 @@ object ScoreService {
 
   /**
    * 获取成长相关的绩点
-   * 返回：(licenseNo, monthlySalesGrowthRatioGPA)
+   * 返回：(storeId, monthlySalesGrowthRatioGPA)
    * 中文：(店铺id  ,             月销售增长比绩点)
    */
   private def getGrowingUpGPA = {
