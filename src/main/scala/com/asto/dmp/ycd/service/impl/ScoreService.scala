@@ -1,10 +1,9 @@
 package com.asto.dmp.ycd.service.impl
 
-import com.asto.dmp.ycd.base.Constants
 import com.asto.dmp.ycd.dao.impl.BizDao
-import com.asto.dmp.ycd.mq.{Msg, MQAgent}
+import com.asto.dmp.ycd.mq.{MsgWrapper, Msg}
 import com.asto.dmp.ycd.service.Service
-import com.asto.dmp.ycd.util.{FileUtils, Utils}
+import com.asto.dmp.ycd.util.{BizUtils, Utils}
 
 object ScoreService {
 
@@ -196,16 +195,18 @@ object ScoreService {
     else GPA
   }
 
-  def sendScoresToMQ() {
+  def sendScores() {
     val scores = getAllScore.map(t => (t._2, t._3, t._4, t._5, t._6, t._7)).collect()(0)
-    MQAgent.send(
-      "得分",
-      Msg("M_SCALE_SCORE", scores._1),
-      Msg("M_PROFIT_SCORE", scores._2),
-      Msg("M_GROWING_UP_SCORE", scores._3),
-      Msg("M_OPERATION_SCORE", scores._4),
-      Msg("M_MARKET_SCORE", scores._5),
-      Msg("M_PROP_CREDIT_SCORE", scores._6)
+    BizUtils.handleMessage(
+      MsgWrapper.getJson(
+        "得分",
+        Msg("M_SCALE_SCORE", scores._1),
+        Msg("M_PROFIT_SCORE", scores._2),
+        Msg("M_GROWING_UP_SCORE", scores._3),
+        Msg("M_OPERATION_SCORE", scores._4),
+        Msg("M_MARKET_SCORE", scores._5),
+        Msg("M_PROP_CREDIT_SCORE", scores._6)
+      )
     )
   }
 }
@@ -215,9 +216,9 @@ object ScoreService {
  */
 class ScoreService extends Service {
   override def runServices() = {
-    ScoreService.sendScoresToMQ()
+    ScoreService.sendScores()
     /*FileUtils.saveAsTextFile(ScoreService.getResultGPA, Constants.OutputPath.GPA)*/
-    FileUtils.saveAsTextFile(ScoreService.getAllScore, Constants.OutputPath.SCORE)
+    //FileUtils.saveAsTextFile(ScoreService.getAllScore, Constants.OutputPath.SCORE)
   }
 }
 

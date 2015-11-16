@@ -2,8 +2,9 @@ package com.asto.dmp.ycd.service.impl
 
 import com.asto.dmp.ycd.base.Constants
 import com.asto.dmp.ycd.dao.impl.BizDao
-import com.asto.dmp.ycd.mq.{MsgWithName, Msg, MQAgent}
+import com.asto.dmp.ycd.mq._
 import com.asto.dmp.ycd.service.Service
+import com.asto.dmp.ycd.util.BizUtils
 
 object FieldsCalculationService {
   /**
@@ -39,18 +40,18 @@ object FieldsCalculationService {
    */
   private def sendIndexes() {
     val fields = FieldsCalculationService.getCalcFields.map(t => (t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11)).collect()(0)
-    MQAgent.send(
-      "各项指标",
-      Msg("M_MONTHS_NUM_FROM_CREATED", fields._1), //经营期限（月）
-      Msg("Y_PAY_MONEY_ANN_AVG", fields._2), //订货额年均值
-      Msg("Y_ORDER_AMOUNT_ANN_AVG", fields._3), //订货条数年均值
-      Msg("Y_PER_CIGAR_AVG_PRICE_OF_ANN_AVG", fields._4), //每条均价年均值
-      Msg("M_ACTIVE_CATEGORY_LAST_MONTH", fields._5), //当前月活跃品类
-      Msg("Y_GROSS_MARGIN_LAST_YEAR", fields._6), //近1年毛利率
-      Msg("M_MONTHLY_SALES_GROWTH_RATIO", fields._7), //月销售增长比
-      Msg("M_SALES_RENT_RATIO", fields._8), //销售额租金比
-      Msg("Y_CATEGORY_CONCENTRATION", fields._9), //品类集中度
-      Msg("M_OFFLINE_SHOPPING_DISTRICT_INDEX", fields._10) //线下商圈指数
+    BizUtils.handleMessage(
+      MsgWrapper.getJson("各项指标",
+        Msg("M_MONTHS_NUM_FROM_CREATED", fields._1), //经营期限（月）
+        Msg("Y_PAY_MONEY_ANN_AVG", fields._2), //订货额年均值
+        Msg("Y_ORDER_AMOUNT_ANN_AVG", fields._3), //订货条数年均值
+        Msg("Y_PER_CIGAR_AVG_PRICE_OF_ANN_AVG", fields._4), //每条均价年均值
+        Msg("M_ACTIVE_CATEGORY_LAST_MONTH", fields._5), //当前月活跃品类
+        Msg("Y_GROSS_MARGIN_LAST_YEAR", fields._6), //近1年毛利率
+        Msg("M_MONTHLY_SALES_GROWTH_RATIO", fields._7), //月销售增长比
+        Msg("M_SALES_RENT_RATIO", fields._8), //销售额租金比
+        Msg("Y_CATEGORY_CONCENTRATION", fields._9), //品类集中度
+        Msg("M_OFFLINE_SHOPPING_DISTRICT_INDEX", fields._10)) //线下商圈指数)
     )
   }
 
@@ -58,9 +59,11 @@ object FieldsCalculationService {
    * 向MQ发送月订货额
    */
   private def sendMoneyAmount() = {
-    MQAgent.send(
-      "订货额",
-      for(elem <- BizDao.moneyAmountPerMonth.collect().toList) yield Msg("M_PAY_MONEY", elem ._2, "2", elem ._1)
+    BizUtils.handleMessage(
+      MsgWrapper.getJson(
+        "订货额",
+        for(elem <- BizDao.moneyAmountPerMonth.collect().toList) yield Msg("M_PAY_MONEY", elem ._2, "2", elem ._1)
+      )
     )
   }
 
@@ -68,9 +71,8 @@ object FieldsCalculationService {
    * 向MQ发送月订货条数
    */
   private def sendOrderAmount() = {
-    MQAgent.send(
-      "订货条数",
-      for(elem <- BizDao.orderAmountPerMonth.collect().toList) yield Msg("M_ORDER_BRANCHES_AMOUNT", elem._2, "2", elem._1)
+    BizUtils.handleMessage(
+      MsgWrapper.getJson("订货条数", for(elem <- BizDao.orderAmountPerMonth.collect().toList) yield Msg("M_ORDER_BRANCHES_AMOUNT", elem._2, "2", elem._1))
     )
   }
 
@@ -78,9 +80,8 @@ object FieldsCalculationService {
    * 发送月订货品类数
    */
   private def sendCategory() = {
-    MQAgent.send(
-      "订货品类数",
-      for(elem <- BizDao.categoryPerMonth) yield Msg("M_CATEGORY_AMOUNT", elem._2, "2", elem._1)
+    BizUtils.handleMessage(
+      MsgWrapper.getJson("订货品类数", for(elem <- BizDao.categoryPerMonth) yield Msg("M_CATEGORY_AMOUNT", elem._2, "2", elem._1))
     )
   }
 
@@ -89,9 +90,8 @@ object FieldsCalculationService {
    * priv
    */
   private def sendOrderNumber() = {
-    MQAgent.send(
-      "订货次数",
-      for(elem <- BizDao.orderNumberPerMonth) yield Msg("M_ORDER_TIMES_AMOUNT", elem._2, "2", elem._1)
+    BizUtils.handleMessage(
+      MsgWrapper.getJson("订货次数", for(elem <- BizDao.orderNumberPerMonth) yield Msg("M_ORDER_TIMES_AMOUNT", elem._2, "2", elem._1))
     )
   }
 
@@ -99,31 +99,28 @@ object FieldsCalculationService {
    * 发送每条均价
    */
   private def sendPerCigarPrice() = {
-    MQAgent.send(
-      "每条均价",
-      for(elem <- BizDao.perCigarPricePerMonth) yield Msg("M_PER_CIGAR_PRICE", elem._2, "2", elem._1)
+    BizUtils.handleMessage(
+      MsgWrapper.getJson("每条均价", for(elem <- BizDao.perCigarPricePerMonth) yield Msg("M_PER_CIGAR_PRICE", elem._2, "2", elem._1))
     )
   }
 
   private def sendActiveCategory() = {
-    MQAgent.send(
-      "活跃品类",
-      (
-        for (elem <- BizDao.getActiveCategoryFor(Constants.App.STORE_ID, (1, 12))) yield {
-          Msg("M_ACTIVE_CATEGORY", elem._3, "2", elem._2)
-        }
-      ).toList
+    BizUtils.handleMessage(
+      MsgWrapper.getJson(
+        "活跃品类",
+        {for (elem <- BizDao.getActiveCategoryFor(Constants.App.STORE_ID, (1, 12))) yield Msg("M_ACTIVE_CATEGORY", elem._3, "2", elem._2)}.toList
+      )
     )
   }
 
   private def sendMoneyAmountTop5PerMonth() = {
     val moneyAmountTop5PerMonth = BizDao.payMoneyTop5PerMonth
     (0 to 4).foreach{ i =>
-      MQAgent.send(
-        s"近12个月订货额top${i+1}",
-        {
-          for(elem <- moneyAmountTop5PerMonth) yield MsgWithName(s"M_PAY_MONEY_TOP${i+1}",  elem._2(i)._2, elem._2(i)._1, "2", elem._1)
-        }.toList
+      BizUtils.handleMessage(
+        MsgWrapper.getJson(
+          s"近12个月订货额top${i+1}",
+          {for(elem <- moneyAmountTop5PerMonth) yield MsgWithName(s"M_PAY_MONEY_TOP${i+1}",  elem._2(i)._2, elem._2(i)._1, "2", elem._1)}.toList
+        )
       )
     }
   }

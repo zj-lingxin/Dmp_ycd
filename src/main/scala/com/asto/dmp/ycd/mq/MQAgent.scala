@@ -26,14 +26,6 @@ object MQAgent extends Logging {
     channel.basicPublish(queueName, queueName, MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes("UTF-8"))
   }
 
-  def send(quotaItemName: String, msg: Msg *): Unit = {
-    send(quotaItemName: String, msg.toList)
-  }
-
-  def send(quotaItemName: String, msg: List[Msg]): Unit = {
-    MQAgent.send(MsgWrapper.getJson(quotaItemName, msg))
-  }
-
   def close() {
     if (Option(channel).isDefined) channel.close()
     if (Option(connection).isDefined) connection.close()

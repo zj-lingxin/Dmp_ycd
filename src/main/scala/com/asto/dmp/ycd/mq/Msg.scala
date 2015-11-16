@@ -13,11 +13,16 @@ object MsgWrapper {
     )).toString()
   }
 
+  def getJson(quotaItemName: String, msgs: Msg *): String = {
+    getJson(quotaItemName: String, msgs.toList)
+  }
+
   def matchMsgType(msg: Msg) = {
-    if (msg.isInstanceOf[MsgWithName]) {
-      toMsgWithNameJsonObj(msg.asInstanceOf[MsgWithName])
-    } else {
-      toJsonObj(msg)
+    msg match {
+      case _msg: MsgWithName =>
+        toMsgWithNameJsonObj(_msg)
+      case _ =>
+        toJsonObj(msg)
     }
   }
 

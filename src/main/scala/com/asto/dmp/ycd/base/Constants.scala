@@ -4,37 +4,35 @@ object Constants {
 
   /** App中的常量与每个项目相关 **/
   object App {
-    val SPARK_UI_APP_NAME = "烟草贷"
-    val CHINESE_NAME = "烟草贷"
-    val HADOOP_DIR = "hdfs://appcluster/ycd/online"
+    val NAME = "烟草贷"
     val LOG_WRAPPER = "##########"
     val YEAR_MONTH_DAY_FORMAT = "yyyy-MM-dd"
     val YEAR_MONTH_FORMAT = "yyyy-MM"
+    val DIR = s"${Hadoop.DEFAULT_FS}/ycd/online"
     var TODAY: String = _
     var STORE_ID: String = _
     var TIMESTAMP: Long = _
     val ERROR_LOG: StringBuffer = new StringBuffer("")
+    var MESSAGES: StringBuffer = new StringBuffer("")
   }
-
+  
+  object Hadoop {
+    val JOBTRACKER_ADDRESS = "appcluster"
+    val DEFAULT_FS = s"hdfs://$JOBTRACKER_ADDRESS"
+  }
   /** 输入文件路径 **/
   object InputPath {
     val SEPARATOR = "\t"
-    val TOBACCO_PRICE = s"${App.HADOOP_DIR}/input/tobacco_price/*"
-    private val DIR = s"${App.HADOOP_DIR}/input/${App.TODAY}/${App.STORE_ID}_${App.TIMESTAMP}"
+    val TOBACCO_PRICE = s"${App.DIR}/input/tobacco_price/*"
+    private val DIR = s"${App.DIR}/input/${App.TODAY}/${App.STORE_ID}_${App.TIMESTAMP}"
     val ORDER_DETAILS = s"$DIR/tobacco_order_details/*"
   }
 
   /** 输出文件路径 **/
   object OutputPath {
     val SEPARATOR = "\t"
-    private val DIR = s"${App.HADOOP_DIR}/output/${App.TODAY}/${App.STORE_ID}_${App.TIMESTAMP}"
-    val CREDIT = s"$DIR/credit"
-    val SCORE = s"$DIR/score"
-    val GPA = s"$DIR/GPA"
-    val FIELD = s"$DIR/field"
-    val ACTIVE_CATEGORY = s"$DIR/activeCategory"
-    val GROSS_MARGIN_PER_MONTH_CATEGORY = s"$DIR/grossMarginPerMonthCategory"
-    val GROSS_MARGIN_PER_MONTH_ALL = s"$DIR/grossMarginPerMonthAll"
+    private val DIR = s"${App.DIR}/output/${App.TODAY}/${App.STORE_ID}_${App.TIMESTAMP}"
+    val MESSAGES_PATH = s"$DIR/messages"
   }
 
   /** 表的模式 **/
@@ -46,5 +44,4 @@ object Constants {
     //ORDER_DETAILS和TOBACCO_PRICE关联的数据： 店铺id, 订单号, 订货日期, 卷烟名称,（单条烟的）批发价|成本价,要货量(想要多少货),订货量(厂家给的货，也就是实际拿到的货),金额（要货量 * （单条烟的）批发价）,品牌系列,零售指导价(元/条),生产厂家
     val ORDER = "store_id,order_id,order_date,cigar_name,wholesale_price,purchase_amount,order_amount,money_amount,cigar_brand,retail_price,producer_name"
   }
-
 }

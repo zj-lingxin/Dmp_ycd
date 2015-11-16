@@ -1,9 +1,8 @@
 package com.asto.dmp.ycd.base
 
-import com.asto.dmp.ycd.dao.impl.BizDao
 import com.asto.dmp.ycd.mq.MQAgent
 import com.asto.dmp.ycd.service.impl.{ScoreService, FieldsCalculationService, CreditService}
-import com.asto.dmp.ycd.util.{DateUtils, Utils}
+import com.asto.dmp.ycd.util.{FileUtils, DateUtils, Utils}
 import org.apache.spark.Logging
 
 object Main extends Logging {
@@ -13,6 +12,7 @@ object Main extends Logging {
     useArgs(args)
     runAllServices()
     closeResources()
+    saveMessages()
     printEndLogs(startTime)
   }
 
@@ -30,7 +30,6 @@ object Main extends Logging {
    * 运行所有的模型
    */
   private def runAllServices() {
-    BizDao.payMoneyTop5PerMonth
     new FieldsCalculationService().run()
     new ScoreService().run()
     new CreditService().run()
@@ -79,5 +78,9 @@ object Main extends Logging {
   private def printEndLogs(startTime: Long): Unit = {
     printErrorLogsIfExist()
     printRunningTime(startTime: Long)
+  }
+
+  private def saveMessages() = {
+    FileUtils.saveAsTextFile(Constants.App.MESSAGES.toString, Constants.OutputPath.MESSAGES_PATH)
   }
 }

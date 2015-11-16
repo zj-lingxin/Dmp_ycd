@@ -4,8 +4,6 @@ import com.asto.dmp.ycd.base.Contexts
 import com.asto.dmp.ycd.dao.SQL
 import com.asto.dmp.ycd.util.{BizUtils, DateUtils, Utils}
 
-import scala.reflect.ClassTag
-
 object BizDao {
 
   /**
@@ -104,7 +102,12 @@ object BizDao {
    * 近12个月，每个月的订货品类数
    */
   def categoryPerMonth = {
-    selectLastMonthsData("order_date,cigar_name", 12).map(a => (DateUtils.strToStr(a(0).toString, "yyyy-MM-dd", "yyyyMM"), a(1).toString)).distinct().map(t => t._1).countByValue().toList.sorted.reverse
+    BaseDao.getOrderProps(SQL().select("order_date,cigar_name").where(s" order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}' and order_amount > '0'"))
+      .map(a => (DateUtils.strToStr(a(0).toString, "yyyy-MM-dd", "yyyyMM"), a(1).toString))
+      .distinct()
+      .map(t => t._1)
+      .countByValue()
+      .toList.sorted.reverse
   }
 
   /**
@@ -127,9 +130,9 @@ object BizDao {
    */
   def payMoneyTop5PerMonth = {
     selectLastMonthsData("order_date,cigar_name,money_amount", 12)
-      .map(a => ((DateUtils.strToStr(a(0).toString, "yyyy-MM-dd", "yyyyMM"), a(1).toString), Utils.retainDecimal(a(2).toString.toDouble, 2)))
+      .map(a => ((DateUtils.strToStr(a(0).toString, "yyyy-MM-dd", "yyyyMM"), a(1).toString), a(2).toString.toDouble))
       .groupByKey()
-      .map(t => (t._1._1,(t._2.sum, t._1._2)))
+      .map(t => (t._1._1,(Utils.retainDecimal(t._2.sum, 2), t._1._2)))
       .groupByKey().map(t => (t._1,t._2.toArray.sorted.reverse.take(5))).collect()
   }
 
