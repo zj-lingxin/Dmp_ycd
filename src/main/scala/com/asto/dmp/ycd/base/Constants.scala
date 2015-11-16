@@ -19,9 +19,9 @@ object Constants {
   /** 输入文件路径 **/
   object InputPath {
     val SEPARATOR = "\t"
-    private val DIR = s"${App.HADOOP_DIR}/input"
+    val TOBACCO_PRICE = s"${App.HADOOP_DIR}/input/tobacco_price/*"
+    private val DIR = s"${App.HADOOP_DIR}/input/${App.TODAY}/${App.STORE_ID}_${App.TIMESTAMP}"
     val ORDER_DETAILS = s"$DIR/tobacco_order_details/*"
-    val TOBACCO_PRICE = s"$DIR/tobacco_price/*"
   }
 
   /** 输出文件路径 **/
