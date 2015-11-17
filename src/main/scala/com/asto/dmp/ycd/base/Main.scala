@@ -1,9 +1,7 @@
 package com.asto.dmp.ycd.base
 
-import com.asto.dmp.ycd.dao.SQL
-import com.asto.dmp.ycd.dao.impl.{BaseDao, BizDao}
 import com.asto.dmp.ycd.mq.MQAgent
-import com.asto.dmp.ycd.service.impl.{ScoreService, FieldsCalculationService, CreditService}
+import com.asto.dmp.ycd.service.impl.{FieldsCalculationService, CreditService, ScoreService}
 import com.asto.dmp.ycd.util.{FileUtils, DateUtils, Utils}
 import org.apache.spark.Logging
 
@@ -42,9 +40,8 @@ object Main extends Logging {
    */
   private def runAllServices() {
     new FieldsCalculationService().run()
-    /*  new ScoreService().run()
-        new CreditService().run()
-        */
+    new ScoreService().run()
+    new CreditService().run()
   }
 
   /**
@@ -93,6 +90,11 @@ object Main extends Logging {
   }
 
   private def saveMessages() = {
-    FileUtils.saveAsTextFile(Constants.App.MESSAGES.toString, Constants.OutputPath.MESSAGES_PATH_ONLINE)
+    var path: String = ""
+    if(Option(Constants.App.STORE_ID).isDefined)
+      path = Constants.OutputPath.MESSAGES_PATH_ONLINE
+    else
+      path = Constants.OutputPath.MESSAGES_PATH_OFFLINE
+    FileUtils.saveAsTextFile(Constants.App.MESSAGES.toString, path)
   }
 }

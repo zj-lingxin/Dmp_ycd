@@ -38,20 +38,24 @@ object CreditService extends org.apache.spark.Logging {
    * 将计算结果通过MQ发送出去
    */
   def sendMessage() {
-    val amountOfCreditArray = getAmountOfCredit.collect()(0)
-    BizUtils.handleMessage(
-      MsgWrapper.getJson(
-        "总得分和授信额度",
-        Msg("M_PROP_CREDIT_SCORE", amountOfCreditArray._3, "1"),
-        Msg("M_PROP_CREDIT_LIMIT_AMOUNT", amountOfCreditArray._5, "1")
-      )
-    )
+    getAmountOfCredit.collect().foreach {
+      eachStore =>
+        BizUtils.handleMessage(
+          MsgWrapper.getJson(
+            "总得分和授信额度",
+            List(
+              Msg("M_PROP_CREDIT_SCORE", eachStore._3, "1"),
+              Msg("M_PROP_CREDIT_LIMIT_AMOUNT", eachStore._5, "1")
+            ),
+            eachStore._1
+          )
+        )
+    }
   }
 }
 
 class CreditService extends Service {
   override protected def runServices(): Unit = {
     CreditService.sendMessage()
-    //FileUtils.saveAsTextFile(CreditService.getAmountOfCredit, Constants.OutputPath.CREDIT)
   }
 }

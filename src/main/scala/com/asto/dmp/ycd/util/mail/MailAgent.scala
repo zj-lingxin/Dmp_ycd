@@ -3,7 +3,6 @@ package com.asto.dmp.ycd.util.mail
 import java.util.{Date, Properties}
 import javax.mail._
 import javax.mail.internet._
-
 import com.asto.dmp.ycd.base.Props
 
 object MailAgent {

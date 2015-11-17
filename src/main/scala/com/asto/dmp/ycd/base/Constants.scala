@@ -39,6 +39,8 @@ object Constants {
     val SEPARATOR = "\t"
     private val ONLINE_DIR = s"${App.DIR}/output/online/${App.TODAY}/${App.STORE_ID}_${App.TIMESTAMP}"
     val MESSAGES_PATH_ONLINE = s"$ONLINE_DIR/messages"
+    private val OFFLINE_DIR = s"${App.DIR}/output/offline/${App.TODAY}/${App.TIMESTAMP}"
+    val MESSAGES_PATH_OFFLINE = s"$OFFLINE_DIR/messages"
   }
 
   /** 表的模式 **/

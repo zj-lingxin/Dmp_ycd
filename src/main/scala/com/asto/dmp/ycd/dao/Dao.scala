@@ -6,11 +6,8 @@ import org.apache.spark.Logging
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
-
 import scala.language.implicitConversions
 import scala.reflect.runtime.universe.TypeTag
-
-
 
 trait Dao extends Logging {
   private val sqlContext = Contexts.sqlContext

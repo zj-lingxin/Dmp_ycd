@@ -196,18 +196,23 @@ object ScoreService {
   }
 
   def sendScores() {
-    val scores = getAllScore.map(t => (t._2, t._3, t._4, t._5, t._6, t._7)).collect()(0)
-    BizUtils.handleMessage(
-      MsgWrapper.getJson(
-        "得分",
-        Msg("M_SCALE_SCORE", scores._1),
-        Msg("M_PROFIT_SCORE", scores._2),
-        Msg("M_GROWING_UP_SCORE", scores._3),
-        Msg("M_OPERATION_SCORE", scores._4),
-        Msg("M_MARKET_SCORE", scores._5),
-        Msg("M_PROP_CREDIT_SCORE", scores._6)
-      )
-    )
+    getAllScore.map(t => (t._1, t._2, t._3, t._4, t._5, t._6, t._7)).collect().foreach {
+      eachStore =>
+        BizUtils.handleMessage(
+          MsgWrapper.getJson(
+            "得分",
+            List(
+              Msg("M_SCALE_SCORE", eachStore._2),
+              Msg("M_PROFIT_SCORE", eachStore._3),
+              Msg("M_GROWING_UP_SCORE", eachStore._4),
+              Msg("M_OPERATION_SCORE", eachStore._5),
+              Msg("M_MARKET_SCORE", eachStore._6),
+              Msg("M_PROP_CREDIT_SCORE", eachStore._7)
+            ),
+            eachStore._1
+          )
+        )
+    }
   }
 }
 
@@ -217,8 +222,6 @@ object ScoreService {
 class ScoreService extends Service {
   override def runServices() = {
     ScoreService.sendScores()
-    /*FileUtils.saveAsTextFile(ScoreService.getResultGPA, Constants.OutputPath.GPA)*/
-    //FileUtils.saveAsTextFile(ScoreService.getAllScore, Constants.OutputPath.SCORE)
   }
 }
 
