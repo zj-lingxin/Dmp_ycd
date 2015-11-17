@@ -1,12 +1,10 @@
 package com.asto.dmp.ycd.service.impl
 
-import com.asto.dmp.ycd.base.Constants
-import com.asto.dmp.ycd.dao.SQL
-import com.asto.dmp.ycd.dao.impl.{BaseDao, BizDao}
+import com.asto.dmp.ycd.dao.impl.BizDao
 import com.asto.dmp.ycd.dao.impl.BizDao._
 import com.asto.dmp.ycd.mq._
 import com.asto.dmp.ycd.service.Service
-import com.asto.dmp.ycd.util.{DateUtils, BizUtils}
+import com.asto.dmp.ycd.util.BizUtils
 
 object FieldsCalculationService {
   /**
@@ -41,20 +39,27 @@ object FieldsCalculationService {
    * 向MQ发送各项指标
    */
   private def sendIndexes() {
-    val fields = FieldsCalculationService.getCalcFields.map(t => (t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11)).collect()(0)
-    BizUtils.handleMessage(
-      MsgWrapper.getJson("各项指标",
-        Msg("M_MONTHS_NUM_FROM_CREATED", fields._1), //经营期限（月）
-        Msg("Y_PAY_MONEY_ANN_AVG", fields._2), //订货额年均值
-        Msg("Y_ORDER_AMOUNT_ANN_AVG", fields._3), //订货条数年均值
-        Msg("Y_PER_CIGAR_AVG_PRICE_OF_ANN_AVG", fields._4), //每条均价年均值
-        Msg("M_ACTIVE_CATEGORY_LAST_MONTH", fields._5), //当前月活跃品类
-        Msg("Y_GROSS_MARGIN_LAST_YEAR", fields._6), //近1年毛利率
-        Msg("M_MONTHLY_SALES_GROWTH_RATIO", fields._7), //月销售增长比
-        Msg("M_SALES_RENT_RATIO", fields._8), //销售额租金比
-        Msg("Y_CATEGORY_CONCENTRATION", fields._9), //品类集中度
-        Msg("M_OFFLINE_SHOPPING_DISTRICT_INDEX", fields._10)) //线下商圈指数)
-    )
+    FieldsCalculationService.getCalcFields.foreach {
+      eachStore =>
+        BizUtils.handleMessage(
+          MsgWrapper.getJson(
+            "各项指标",
+            List(
+              Msg("M_MONTHS_NUM_FROM_CREATED", eachStore._2), //经营期限（月）
+              Msg("Y_PAY_MONEY_ANN_AVG", eachStore._3), //订货额年均值
+              Msg("Y_ORDER_AMOUNT_ANN_AVG", eachStore._4), //订货条数年均值
+              Msg("Y_PER_CIGAR_AVG_PRICE_OF_ANN_AVG", eachStore._5), //每条均价年均值
+              Msg("M_ACTIVE_CATEGORY_LAST_MONTH", eachStore._6), //当前月活跃品类
+              Msg("Y_GROSS_MARGIN_LAST_YEAR", eachStore._7), //近1年毛利率
+              Msg("M_MONTHLY_SALES_GROWTH_RATIO", eachStore._8), //月销售增长比
+              Msg("M_SALES_RENT_RATIO", eachStore._9), //销售额租金比
+              Msg("Y_CATEGORY_CONCENTRATION", eachStore._10), //品类集中度
+              Msg("M_OFFLINE_SHOPPING_DISTRICT_INDEX", eachStore._11) //线下商圈指数)
+            ),
+            eachStore._1
+          )
+        )
+    }
   }
 
   /**
@@ -126,7 +131,7 @@ object FieldsCalculationService {
    * 发送每条均价
    */
   private def sendPerCigarPrice() = {
-    perCigarPricePerMonth.groupByKey().collect.foreach {
+    perCigarPricePerMonth.groupByKey().collect().foreach {
       eachStore =>
         BizUtils.handleMessage(
           MsgWrapper.getJson(
@@ -149,46 +154,40 @@ object FieldsCalculationService {
           )
         )
     }
-    /*    BaseDao.getOrderProps(SQL().select("store_id,order_date").where(s" order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}'")).map(a => a(0).toString).distinct().collect().foreach {
-          storeId =>
-            BizUtils.handleMessage(
-              MsgWrapper.getJson(
-                "活跃品类", {
-                  for (elem <- getActiveCategoryFor(storeId, (1, 12))) yield Msg("M_ACTIVE_CATEGORY", elem._3, "2", elem._2)
-                }.toList
-              )
-            )
-        }*/
   }
 
   private def sendMoneyAmountTop5PerMonth() = {
-    val moneyAmountTop5PerMonth = payMoneyTop5PerMonth
-    (0 to 4).foreach { i =>
-      BizUtils.handleMessage(
-        MsgWrapper.getJson(
-          s"近12个月订货额top${i + 1}", {
-            for (elem <- moneyAmountTop5PerMonth) yield MsgWithName(s"M_PAY_MONEY_TOP${i + 1}", elem._2(i)._2, elem._2(i)._1, "2", elem._1)
-          }.toList
-        )
-      )
+    BizDao.payMoneyTop5PerMonth.foreach {
+      eachStore =>
+        val lastYearData = eachStore._2.toList
+        (0 to 4).foreach { i =>
+          BizUtils.handleMessage(
+            MsgWrapper.getJson(
+              s"近12个月订货额top${i + 1}",
+              for (eachMonthData <- lastYearData) yield setMsgWithNameFor(eachMonthData, i),
+              eachStore._1
+            )
+          )
+        }
     }
   }
 
+  private def setMsgWithNameFor(eachMonthData: (String, List[(Double, String)]), topIndex: Int) = {
+    if (eachMonthData._2.length > topIndex)
+      MsgWithName(s"M_PAY_MONEY_TOP${topIndex + 1}", eachMonthData._2(topIndex)._2, eachMonthData._2(topIndex)._1, "2", eachMonthData._1)
+    else
+      MsgWithName(s"M_PAY_MONEY_TOP${topIndex + 1}", "Null", 0, "2", eachMonthData._1)
+  }
+
   private def sendMessageToMQ() = {
-    //sendMoneyAmount() //完成
-    //sendOrderAmount() //完成
-    //sendCategory() //完成
-    //sendOrderNumber() //完成
-    //sendPerCigarPrice()//完成
-    //sendActiveCategory() //完成
+    sendMoneyAmount()
+    sendOrderAmount()
+    sendCategory()
+    sendOrderNumber()
+    sendPerCigarPrice()
     sendActiveCategory()
-    /*
-
-
-
-        sendMoneyAmountTop5PerMonth()
-        sendIndexes()
-        */
+    sendMoneyAmountTop5PerMonth()
+    sendIndexes()
   }
 }
 

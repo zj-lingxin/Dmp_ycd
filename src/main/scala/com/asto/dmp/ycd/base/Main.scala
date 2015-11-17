@@ -41,13 +41,10 @@ object Main extends Logging {
    * 运行所有的模型
    */
   private def runAllServices() {
-
-    //BizDao.getNewActiveCategoryInLast12Months(1,12)
-     new FieldsCalculationService().run()
-    //
-    //
-    /*    new ScoreService().run()
-        new CreditService().run()*/
+    new FieldsCalculationService().run()
+    /*  new ScoreService().run()
+        new CreditService().run()
+        */
   }
 
   /**

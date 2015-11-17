@@ -65,20 +65,20 @@ object BizDao {
       .map(t => (t._1, t._2._1 / t._2._2.get)).persist()
   }
 
-/*
-  /**
-   * 活跃品类数
-   * 当月月均活跃品类，为前三个月月均的订货量≥3的品类之和，如2015.10显示的活跃品类为，2015.8-2015.10三个月订货量≥9的，品类数之和；
-   * 计算12个月的活跃评类数。如果不能提取到14个月的数据，则最初两个月的数据为空，均值按近十个月计算；
-   * 返回：店铺id，日期，活跃品类数
-   * 注意：该方法的效率比较低，如果对系统执行时间有影响，可以对该方法进行优化。
-   */
-  def getActiveCategoryInLast12Months = {
-    val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()
-    storeIdArray.foreach(list ++= getActiveCategoryFor(_, (0, 11)))
-    Contexts.sparkContext.parallelize(list)
-  }
-*/
+  /*
+    /**
+     * 活跃品类数
+     * 当月月均活跃品类，为前三个月月均的订货量≥3的品类之和，如2015.10显示的活跃品类为，2015.8-2015.10三个月订货量≥9的，品类数之和；
+     * 计算12个月的活跃评类数。如果不能提取到14个月的数据，则最初两个月的数据为空，均值按近十个月计算；
+     * 返回：店铺id，日期，活跃品类数
+     * 注意：该方法的效率比较低，如果对系统执行时间有影响，可以对该方法进行优化。
+     */
+    def getActiveCategoryInLast12Months = {
+      val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()
+      storeIdArray.foreach(list ++= getActiveCategoryFor(_, (0, 11)))
+      Contexts.sparkContext.parallelize(list)
+    }
+  */
 
   /**
    * 活跃品类数
@@ -195,22 +195,25 @@ object BizDao {
    *
    */
   def payMoneyTop5PerMonth = {
-    selectLastMonthsData("order_date,cigar_name,money_amount", 12)
-      .map(a => ((DateUtils.strToStr(a(0).toString, "yyyy-MM-dd", "yyyyMM"), a(1).toString), a(2).toString.toDouble))
+    selectLastMonthsData("store_id,order_date,cigar_name,money_amount", 12)
+      .map(a => ((a(0).toString, DateUtils.strToStr(a(1).toString, "yyyy-MM-dd", "yyyyMM"), a(2).toString), a(3).toString.toDouble))
       .groupByKey()
-      .map(t => (t._1._1, (Utils.retainDecimal(t._2.sum, 2), t._1._2)))
-      .groupByKey().map(t => (t._1, t._2.toArray.sorted.reverse.take(5))).collect()
+      .map(t => ((t._1._1, t._1._2), (Utils.retainDecimal(t._2.sum, 2), t._1._3)))
+      .groupByKey()
+      .map(t => (t._1, t._2.toList.sorted.reverse.take(5)))
+      .map(t => (t._1._1, (t._1._2, t._2)))
+      .groupByKey().collect
   }
 
-/*  def getActiveCategoryFor(storeId: String, timeRange: (Int, Int)) = {
-    val monthsNumFromEarliestOrderMap = monthsNumFromEarliestOrder.collect().toMap[String, Int]
-    val monthNum = Math.min(monthsNumFromEarliestOrderMap(storeId), 14)
-    val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()
-    (timeRange._1 to timeRange._2).toStream.takeWhile(m => (m + 3) <= monthNum).foreach {
-      m => list += Tuple3(storeId, DateUtils.monthsAgo(m, "yyyyMM"), countNumbersOfActiveCategoryForMonth(m, storeId))
-    }
-    list
-  }*/
+  /*  def getActiveCategoryFor(storeId: String, timeRange: (Int, Int)) = {
+      val monthsNumFromEarliestOrderMap = monthsNumFromEarliestOrder.collect().toMap[String, Int]
+      val monthNum = Math.min(monthsNumFromEarliestOrderMap(storeId), 14)
+      val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()
+      (timeRange._1 to timeRange._2).toStream.takeWhile(m => (m + 3) <= monthNum).foreach {
+        m => list += Tuple3(storeId, DateUtils.monthsAgo(m, "yyyyMM"), countNumbersOfActiveCategoryForMonth(m, storeId))
+      }
+      list
+    }*/
 
   /**
    * 获取当月活跃品类数
@@ -226,13 +229,13 @@ object BizDao {
       .map(t => (t._1, t._2.sum)).persist()
   }
 
-/*  def countNumbersOfActiveCategoryForMonth(m: Int, storeId: String) = {
-    BaseDao.getOrderProps(SQL().select("cigar_name,order_date,order_amount").where(s" order_date >= '${DateUtils.monthsAgo(m + 3, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(m, "yyyy-MM-01")}' and store_id = '$storeId'"))
-      .map(a => (a(0).toString, a(2).toString.toInt))
-      .groupByKey()
-      .map(t => (t._1, t._2.sum))
-      .filter(t => t._2 >= 9).count()
-  }*/
+  /*  def countNumbersOfActiveCategoryForMonth(m: Int, storeId: String) = {
+      BaseDao.getOrderProps(SQL().select("cigar_name,order_date,order_amount").where(s" order_date >= '${DateUtils.monthsAgo(m + 3, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(m, "yyyy-MM-01")}' and store_id = '$storeId'"))
+        .map(a => (a(0).toString, a(2).toString.toInt))
+        .groupByKey()
+        .map(t => (t._1, t._2.sum))
+        .filter(t => t._2 >= 9).count()
+    }*/
 
   /**
    * 单品毛利率 = （零售指导价-成本价）/指导价*100%
