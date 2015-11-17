@@ -17,7 +17,8 @@ object BaseDao extends Dao {
 
   private def orderSql = {
     val sql = SQL().select("cigar_name,store_id,order_id,order_date,wholesale_price,purchase_amount,order_amount,money_amount")
-    if(Option(Constants.App.STORE_ID).isDefined) sql.where(s"store_id = '${Constants.App.STORE_ID}'")
+    if(Option(Constants.App.STORE_ID).isDefined) sql.where(s"order_date <> 'null' and store_id = '${Constants.App.STORE_ID}'")
+    else sql.where(s"order_date <> 'null'")
     sql
   }
 

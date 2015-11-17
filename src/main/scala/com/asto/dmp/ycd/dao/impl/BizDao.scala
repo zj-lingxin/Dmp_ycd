@@ -3,7 +3,6 @@ package com.asto.dmp.ycd.dao.impl
 import com.asto.dmp.ycd.base.Contexts
 import com.asto.dmp.ycd.dao.SQL
 import com.asto.dmp.ycd.util.{BizUtils, DateUtils, Utils}
-import groovy.lang.Tuple
 
 object BizDao {
 
@@ -11,7 +10,7 @@ object BizDao {
    * 经营期限（月）= 申请贷款月份(系统运行时间) - 最早一笔网上订单的月份
    */
   def monthsNumFromEarliestOrder = {
-    BaseDao.getOrderProps(SQL().select("store_id,order_date"))
+    BaseDao.getOrderProps(SQL().select("store_id,order_date").where("order_date != 'null'"))
       .map(a => (a(0).toString, a(1).toString))
       .groupByKey()
       .map(t => (t._1, BizUtils.monthsNumFrom(t._2.min, "yyyy-MM-dd"))).persist()
@@ -66,6 +65,7 @@ object BizDao {
       .map(t => (t._1, t._2._1 / t._2._2.get)).persist()
   }
 
+/*
   /**
    * 活跃品类数
    * 当月月均活跃品类，为前三个月月均的订货量≥3的品类之和，如2015.10显示的活跃品类为，2015.8-2015.10三个月订货量≥9的，品类数之和；
@@ -78,35 +78,64 @@ object BizDao {
     storeIdArray.foreach(list ++= getActiveCategoryFor(_, (0, 11)))
     Contexts.sparkContext.parallelize(list)
   }
+*/
+
+  /**
+   * 活跃品类数
+   * 当月月均活跃品类，为前三个月月均的订货量≥3的品类之和，如2015.10显示的活跃品类为，2015.8-2015.10三个月订货量≥9的，品类数之和；
+   * 计算12个月的活跃评类数。如果不能提取到14个月的数据，则最初两个月的数据为空，均值按近十个月计算；
+   * 返回：店铺id，日期，活跃品类数
+   * 注意：该方法的效率比较低，如果对系统执行时间有影响，可以对该方法进行优化。
+   */
+  def getNewActiveCategoryInLast12Months(timeRanges: (Int, Int)) = {
+    val storeIds = storeIdArray
+    val allArray = allData.collect()
+    val result = scala.collection.mutable.ListBuffer[(String, String, Int)]()
+    storeIds.foreach {
+      storeId =>
+        (timeRanges._1 to timeRanges._2).foreach {
+          months =>
+            val thisMonths = DateUtils.monthsAgo(months, "yyyyMM")
+            val range = monthRange(months)
+            val num = allArray.filter(t => t._1._1 == storeId && range._1 >= t._1._2 && t._1._2 >= range._2)
+              .map(t => (t._1._3, t._2))
+              .groupBy(_._1)
+              .map(t => (t._1, (for (e <- t._2.toList) yield e._2).sum))
+              .filter(_._2 >= 9).toList.size
+            result += Tuple3(storeId, thisMonths, num)
+        }
+    }
+    result
+  }
+
+  private def monthRange(m: Int) = {
+    (DateUtils.monthsAgo(m + 1, "yyyyMM"), DateUtils.monthsAgo(m + 3, "yyyyMM"))
+  }
+
+  private def allData = {
+    BaseDao.getOrderProps(SQL().select("store_id,order_date,cigar_name,order_amount").where(s" order_date >= '${DateUtils.monthsAgo(15, "yyyy-MM-01")}' "))
+      .map(a => ((a(0).toString, DateUtils.strToStr(a(1).toString, "yyyy-MM-dd", "yyyyMM"), a(2).toString), a(3).toString.toInt))
+      .groupByKey()
+      .map(t => (t._1, t._2.sum)).cache()
+  }
 
   /**
    * 近12个月，每个月的订货额
    */
   def moneyAmountPerMonth = {
-    import Helper._
+    import Helper.storeIdAndOrderDateOrdering
     selectLastMonthsData(s"store_id,order_date,money_amount", 12)
       .map(a => ((a(0).toString, DateUtils.strToStr(a(1).toString, "yyyy-MM-dd", "yyyyMM")), a(2).toString.toDouble))
       .groupByKey()
       .map(t => (t._1, Utils.retainDecimal(t._2.sum, 2))).sortBy(_._1).cache()
-
-  /*  selectLastMonthsData(s"order_date,money_amount", 12)
-      .map(a => (DateUtils.strToStr(a(0).toString, "yyyy-MM-dd", "yyyyMM"), a(1).toString.toDouble))
-      .groupByKey()
-      .map(t => (t._1, Utils.retainDecimal(t._2.sum, 2))).cache()*/
   }
 
-  /*  def moneyAmountPerMonth = {
-      selectLastMonthsData(s"order_date,money_amount", 12)
-        .map(a => (DateUtils.strToStr(a(0).toString, "yyyy-MM-dd", "yyyyMM"), a(1).toString.toDouble))
-        .groupByKey()
-        .map(t => (t._1, Utils.retainDecimal(t._2.sum, 2))).cache()
-    }*/
 
   /**
    * 近12个月，每个月的订货条数
    */
   def orderAmountPerMonth = {
-    import Helper._
+    import Helper.storeIdAndOrderDateOrdering
     selectLastMonthsData(s"store_id,order_date,order_amount", 12)
       .map(a => ((a(0).toString, DateUtils.strToStr(a(1).toString, "yyyy-MM-dd", "yyyyMM")), a(2).toString.toInt))
       .groupByKey()
@@ -117,26 +146,48 @@ object BizDao {
    * 近12个月，每个月的订货品类数
    */
   def categoryPerMonth = {
-    BaseDao.getOrderProps(SQL().select("order_date,cigar_name").where(s" order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}' and order_amount > '0'"))
-      .map(a => (DateUtils.strToStr(a(0).toString, "yyyy-MM-dd", "yyyyMM"), a(1).toString))
+    import Helper.storeIdAndOrderDateOrdering
+    BaseDao.getOrderProps(SQL().select("store_id,order_date,cigar_name").where(s" order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}' and order_amount > '0'"))
+      .map(a => (a(0).toString, DateUtils.strToStr(a(1).toString, "yyyy-MM-dd", "yyyyMM"), a(2).toString))
       .distinct()
-      .map(t => t._1)
-      .countByValue()
-      .toList.sorted.reverse
+      .map(t => ((t._1, t._2), 1))
+      .groupByKey()
+      .map(t => (t._1, t._2.sum))
+      .sortBy(_._1)
+      .map(t => (t._1._1, (t._1._2, t._2))).cache()
+
+    /*  BaseDao.getOrderProps(SQL().select("store_id,order_date,cigar_name").where(s" order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}' and order_amount > '0'"))
+        .map(a => (a(0).toString, DateUtils.strToStr(a(1).toString, "yyyy-MM-dd", "yyyyMM"), a(2).toString))
+        .distinct()
+        .map(t => (t._1,t._2))
+        .countByValue()
+        .toList.sorted.reverse*/
   }
 
   /**
    * 近12个月，每个月的订货次数
    */
   def orderNumberPerMonth = {
-    selectLastMonthsData("order_date,order_id", 12).map(a => (DateUtils.strToStr(a(0).toString, "yyyy-MM-dd", "yyyyMM"), a(1).toString)).distinct().map(t => t._1).countByValue().toList.sorted.reverse
+    import Helper.storeIdAndOrderDateOrdering
+    selectLastMonthsData("store_id,order_date,order_id", 12)
+      .map(a => (a(0).toString, DateUtils.strToStr(a(1).toString, "yyyy-MM-dd", "yyyyMM"), a(2).toString))
+      .distinct()
+      .map(t => ((t._1, t._2), 1))
+      .groupByKey()
+      .map(t => (t._1, t._2.sum))
+      .sortBy(_._1)
+      .map(t => (t._1._1, (t._1._2, t._2)))
   }
 
   /**
    * 近12个月，每条均价
    */
   def perCigarPricePerMonth = {
-    moneyAmountPerMonth.leftOuterJoin(orderAmountPerMonth).map(t => (t._1, Utils.retainDecimal(t._2._1 / t._2._2.get, 2))).collect().toList.sorted.reverse
+    import Helper.storeIdAndOrderDateOrdering
+    moneyAmountPerMonth.leftOuterJoin(orderAmountPerMonth)
+      .map(t => (t._1, Utils.retainDecimal(t._2._1 / t._2._2.get, 2)))
+      .sortBy(_._1)
+      .map(t => (t._1._1, (t._1._2, t._2)))
   }
 
   /**
@@ -151,7 +202,7 @@ object BizDao {
       .groupByKey().map(t => (t._1, t._2.toArray.sorted.reverse.take(5))).collect()
   }
 
-  def getActiveCategoryFor(storeId: String, timeRange: (Int, Int)) = {
+/*  def getActiveCategoryFor(storeId: String, timeRange: (Int, Int)) = {
     val monthsNumFromEarliestOrderMap = monthsNumFromEarliestOrder.collect().toMap[String, Int]
     val monthNum = Math.min(monthsNumFromEarliestOrderMap(storeId), 14)
     val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()
@@ -159,7 +210,7 @@ object BizDao {
       m => list += Tuple3(storeId, DateUtils.monthsAgo(m, "yyyyMM"), countNumbersOfActiveCategoryForMonth(m, storeId))
     }
     list
-  }
+  }*/
 
   /**
    * 获取当月活跃品类数
@@ -175,13 +226,13 @@ object BizDao {
       .map(t => (t._1, t._2.sum)).persist()
   }
 
-  def countNumbersOfActiveCategoryForMonth(m: Int, storeId: String) = {
+/*  def countNumbersOfActiveCategoryForMonth(m: Int, storeId: String) = {
     BaseDao.getOrderProps(SQL().select("cigar_name,order_date,order_amount").where(s" order_date >= '${DateUtils.monthsAgo(m + 3, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(m, "yyyy-MM-01")}' and store_id = '$storeId'"))
       .map(a => (a(0).toString, a(2).toString.toInt))
       .groupByKey()
       .map(t => (t._1, t._2.sum))
       .filter(t => t._2 >= 9).count()
-  }
+  }*/
 
   /**
    * 单品毛利率 = （零售指导价-成本价）/指导价*100%
@@ -306,7 +357,7 @@ object BizDao {
     Contexts.sparkContext.parallelize(storeIdArray).map((_, 0.6)).persist()
   }
 
-  def storeIdArray = BaseDao.getOrderProps(SQL().select("store_id")).map(a => a(0).toString).distinct().collect()
+  def storeIdArray = BaseDao.getOrderProps(SQL().select("store_id").where(s"order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}'")).map(a => a(0).toString).distinct().collect()
 
   /**
    * 线下商圈指数

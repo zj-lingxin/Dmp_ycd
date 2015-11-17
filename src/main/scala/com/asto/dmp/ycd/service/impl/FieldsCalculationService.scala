@@ -1,10 +1,12 @@
 package com.asto.dmp.ycd.service.impl
 
 import com.asto.dmp.ycd.base.Constants
-import com.asto.dmp.ycd.dao.impl.BizDao
+import com.asto.dmp.ycd.dao.SQL
+import com.asto.dmp.ycd.dao.impl.{BaseDao, BizDao}
+import com.asto.dmp.ycd.dao.impl.BizDao._
 import com.asto.dmp.ycd.mq._
 import com.asto.dmp.ycd.service.Service
-import com.asto.dmp.ycd.util.BizUtils
+import com.asto.dmp.ycd.util.{DateUtils, BizUtils}
 
 object FieldsCalculationService {
   /**
@@ -15,23 +17,23 @@ object FieldsCalculationService {
    * 中文：(店铺id,经营期限（月）,订货额年均值,订货条数年均值,每条均价年均值,当前月活跃品类,近1年毛利率,月销售增长比,销售额租金比,品类集中度,线下商圈指数)
    */
   def getCalcFields = {
-    BizDao.monthsNumFromEarliestOrder.leftOuterJoin(BizDao.moneyAmountAnnAvg)
+    monthsNumFromEarliestOrder.leftOuterJoin(moneyAmountAnnAvg)
       .map(t => (t._1, (t._2._1, t._2._2.get)))
-      .leftOuterJoin(BizDao.orderAmountAnnAvg)
+      .leftOuterJoin(orderAmountAnnAvg)
       .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._2.get))) // monthsNumFromEarliestOrder,payMoneyAnnAvg,orderAmountAnnAvg
-      .leftOuterJoin(BizDao.perCigarAvgPriceOfAnnAvg)
+      .leftOuterJoin(perCigarAvgPriceOfAnnAvg)
       .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._2.get))) //monthsNumFromEarliestOrder,payMoneyAnnAvg,orderAmountAnnAvg,perCigarAvgPriceOfAnnAvg
-      .leftOuterJoin(BizDao.getActiveCategoryInLastMonth)
+      .leftOuterJoin(getActiveCategoryInLastMonth)
       .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._2.get))) //
-      .leftOuterJoin(BizDao.grossMarginLastYear)
+      .leftOuterJoin(grossMarginLastYear)
       .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._1._5, t._2._2.get)))
-      .leftOuterJoin(BizDao.monthlySalesGrowthRatio)
+      .leftOuterJoin(monthlySalesGrowthRatio)
       .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._1._5, t._2._1._6, t._2._2.get)))
-      .leftOuterJoin(BizDao.salesRentRatio)
+      .leftOuterJoin(salesRentRatio)
       .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._1._5, t._2._1._6, t._2._1._7, t._2._2.get)))
-      .leftOuterJoin(BizDao.categoryConcentration)
+      .leftOuterJoin(categoryConcentration)
       .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._1._5, t._2._1._6, t._2._1._7, t._2._1._8, t._2._2.get)))
-      .leftOuterJoin(BizDao.offlineShoppingDistrictIndex)
+      .leftOuterJoin(offlineShoppingDistrictIndex)
       .map(t => (t._1, t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._1._5, t._2._1._6, t._2._1._7, t._2._1._8, t._2._1._9, t._2._2.get))
   }
 
@@ -59,36 +61,48 @@ object FieldsCalculationService {
    * 向MQ发送月订货额
    */
   private def sendMoneyAmount() = {
-/*    BizUtils.handleMessage(
-      MsgWrapper.getJson(
-        "订货额",
-        for(elem <- BizDao.moneyAmountPerMonth.collect().toList) yield Msg("M_PAY_MONEY", elem ._2, "2", elem ._1)
-      )
-    )*/
+    moneyAmountPerMonth.map(t => (t._1._1, (t._1._2, t._2))).groupByKey().collect().foreach {
+      eachStore =>
+        BizUtils.handleMessage(
+          MsgWrapper.getJson(
+            "订货额",
+            for (elem <- eachStore._2.toList) yield Msg("M_PAY_MONEY", elem._2, "2", elem._1),
+            eachStore._1
+          )
+        )
+    }
   }
 
   /**
    * 向MQ发送月订货条数
    */
   private def sendOrderAmount() = {
-    val allOrderAmountPerMonth = BizDao.orderAmountPerMonth.collect().toList.map(t => (t._1._1,(t._1._2,t._2))).groupBy(t => t._1)
-    allOrderAmountPerMonth.foreach { orderAmountPerMonth =>
-      BizUtils.handleMessage(
-        MsgWrapper.getJson("订货条数", for(elem <- orderAmountPerMonth._2) yield Msg("M_ORDER_BRANCHES_AMOUNT", elem._2._2, "2", elem._2._1), orderAmountPerMonth._1)
-      )
+    orderAmountPerMonth.map(t => (t._1._1, (t._1._2, t._2))).groupByKey().collect().foreach {
+      eachStore =>
+        BizUtils.handleMessage(
+          MsgWrapper.getJson(
+            "订货条数",
+            for (elem <- eachStore._2.toList) yield Msg("M_ORDER_BRANCHES_AMOUNT", elem._2, "2", elem._1),
+            eachStore._1
+          )
+        )
     }
-/*    BizUtils.handleMessage(
-      MsgWrapper.getJson("订货条数", for(elem <- BizDao.orderAmountPerMonth.collect().toList) yield Msg("M_ORDER_BRANCHES_AMOUNT", elem._2, "2", elem._1._2))
-    )*/
   }
 
   /**
    * 发送月订货品类数
    */
   private def sendCategory() = {
-    BizUtils.handleMessage(
-      MsgWrapper.getJson("订货品类数", for(elem <- BizDao.categoryPerMonth) yield Msg("M_CATEGORY_AMOUNT", elem._2, "2", elem._1))
-    )
+    categoryPerMonth.groupByKey().collect().foreach {
+      categoryPerMonth =>
+        BizUtils.handleMessage(
+          MsgWrapper.getJson(
+            "订货品类数",
+            for (elem <- categoryPerMonth._2.toList) yield Msg("M_CATEGORY_AMOUNT", elem._2, "2", elem._1),
+            categoryPerMonth._1
+          )
+        )
+    }
   }
 
   /**
@@ -96,50 +110,85 @@ object FieldsCalculationService {
    * priv
    */
   private def sendOrderNumber() = {
-    BizUtils.handleMessage(
-      MsgWrapper.getJson("订货次数", for(elem <- BizDao.orderNumberPerMonth) yield Msg("M_ORDER_TIMES_AMOUNT", elem._2, "2", elem._1))
-    )
+    orderNumberPerMonth.groupByKey().collect().foreach {
+      eachStore =>
+        BizUtils.handleMessage(
+          MsgWrapper.getJson(
+            "订货次数",
+            for (elem <- eachStore._2.toList) yield Msg("M_ORDER_TIMES_AMOUNT", elem._2, "2", elem._1),
+            eachStore._1
+          )
+        )
+    }
   }
 
   /**
    * 发送每条均价
    */
   private def sendPerCigarPrice() = {
- /*   BizUtils.handleMessage(
-      MsgWrapper.getJson("每条均价", for(elem <- BizDao.perCigarPricePerMonth) yield Msg("M_PER_CIGAR_PRICE", elem._2, "2", elem._1))
-    )*/
+    perCigarPricePerMonth.groupByKey().collect.foreach {
+      eachStore =>
+        BizUtils.handleMessage(
+          MsgWrapper.getJson(
+            "每条均价",
+            for (elem <- eachStore._2.toList) yield Msg("M_PER_CIGAR_PRICE", elem._2, "2", elem._1),
+            eachStore._1
+          )
+        )
+    }
   }
 
   private def sendActiveCategory() = {
-    BizUtils.handleMessage(
-      MsgWrapper.getJson(
-        "活跃品类",
-        {for (elem <- BizDao.getActiveCategoryFor(Constants.App.STORE_ID, (1, 12))) yield Msg("M_ACTIVE_CATEGORY", elem._3, "2", elem._2)}.toList
-      )
-    )
+    BizDao.getNewActiveCategoryInLast12Months(1, 12).groupBy(_._1).foreach {
+      eachStore =>
+        BizUtils.handleMessage(
+          MsgWrapper.getJson(
+            "活跃品类",
+            for (elem <- eachStore._2.toList) yield Msg("M_ACTIVE_CATEGORY", elem._3, "2", elem._2),
+            eachStore._1
+          )
+        )
+    }
+    /*    BaseDao.getOrderProps(SQL().select("store_id,order_date").where(s" order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}'")).map(a => a(0).toString).distinct().collect().foreach {
+          storeId =>
+            BizUtils.handleMessage(
+              MsgWrapper.getJson(
+                "活跃品类", {
+                  for (elem <- getActiveCategoryFor(storeId, (1, 12))) yield Msg("M_ACTIVE_CATEGORY", elem._3, "2", elem._2)
+                }.toList
+              )
+            )
+        }*/
   }
 
   private def sendMoneyAmountTop5PerMonth() = {
-    val moneyAmountTop5PerMonth = BizDao.payMoneyTop5PerMonth
-    (0 to 4).foreach{ i =>
+    val moneyAmountTop5PerMonth = payMoneyTop5PerMonth
+    (0 to 4).foreach { i =>
       BizUtils.handleMessage(
         MsgWrapper.getJson(
-          s"近12个月订货额top${i+1}",
-          {for(elem <- moneyAmountTop5PerMonth) yield MsgWithName(s"M_PAY_MONEY_TOP${i+1}",  elem._2(i)._2, elem._2(i)._1, "2", elem._1)}.toList
+          s"近12个月订货额top${i + 1}", {
+            for (elem <- moneyAmountTop5PerMonth) yield MsgWithName(s"M_PAY_MONEY_TOP${i + 1}", elem._2(i)._2, elem._2(i)._1, "2", elem._1)
+          }.toList
         )
       )
     }
   }
 
   private def sendMessageToMQ() = {
-   sendMoneyAmount()
-    /*   sendIndexes()*/
-    sendOrderAmount()
-/*    sendCategory()
-    sendOrderNumber()
-    sendPerCigarPrice()
+    //sendMoneyAmount() //完成
+    //sendOrderAmount() //完成
+    //sendCategory() //完成
+    //sendOrderNumber() //完成
+    //sendPerCigarPrice()//完成
+    //sendActiveCategory() //完成
     sendActiveCategory()
-    sendMoneyAmountTop5PerMonth()*/
+    /*
+
+
+
+        sendMoneyAmountTop5PerMonth()
+        sendIndexes()
+        */
   }
 }
 

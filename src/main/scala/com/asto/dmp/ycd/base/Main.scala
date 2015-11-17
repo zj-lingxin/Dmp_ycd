@@ -1,6 +1,7 @@
 package com.asto.dmp.ycd.base
 
-import com.asto.dmp.ycd.dao.impl.BizDao
+import com.asto.dmp.ycd.dao.SQL
+import com.asto.dmp.ycd.dao.impl.{BaseDao, BizDao}
 import com.asto.dmp.ycd.mq.MQAgent
 import com.asto.dmp.ycd.service.impl.{ScoreService, FieldsCalculationService, CreditService}
 import com.asto.dmp.ycd.util.{FileUtils, DateUtils, Utils}
@@ -22,7 +23,16 @@ object Main extends Logging {
    */
   private def useArgs(args: Array[String]) {
     Constants.App.TIMESTAMP = args(0).toLong
-    if (args.length == 2) Constants.App.STORE_ID = args(1)
+    args.length match {
+      case 1 =>
+        logInfo(Utils.logWrapper("运行离线模型，计算所有店铺"))
+      case 2 =>
+        Constants.App.STORE_ID = args(1)
+        logInfo(Utils.logWrapper(s"运行在线模型，计算店铺ID为：${Constants.App.STORE_ID}"))
+      case _ =>
+        logInfo(Utils.logWrapper(s"传入参数有误"))
+    }
+
     //从外部传入的是秒级别的时间戳，所以要乘以1000
     Constants.App.TODAY = DateUtils.timestampToStr(Constants.App.TIMESTAMP * 1000, "yyyyMM/dd")
   }
@@ -31,9 +41,13 @@ object Main extends Logging {
    * 运行所有的模型
    */
   private def runAllServices() {
-    new FieldsCalculationService().run()
-/*    new ScoreService().run()
-    new CreditService().run()*/
+
+    //BizDao.getNewActiveCategoryInLast12Months(1,12)
+     new FieldsCalculationService().run()
+    //
+    //
+    /*    new ScoreService().run()
+        new CreditService().run()*/
   }
 
   /**

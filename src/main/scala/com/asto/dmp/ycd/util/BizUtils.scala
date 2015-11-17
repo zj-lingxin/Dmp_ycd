@@ -20,4 +20,5 @@ object BizUtils {
     MQAgent.send(msg)
     Constants.App.MESSAGES.append(msg + "\n")
   }
+
 }
