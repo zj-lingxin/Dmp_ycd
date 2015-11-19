@@ -8,9 +8,10 @@ object Constants {
     val LOG_WRAPPER = "##########"
     val YEAR_MONTH_DAY_FORMAT = "yyyy-MM-dd"
     val YEAR_MONTH_FORMAT = "yyyy-MM"
-    val DIR = s"${Hadoop.DEFAULT_FS}/ycd/"
+    val DIR = s"${Hadoop.DEFAULT_FS}/ycd"
     var TODAY: String = _
     var STORE_ID: String = _
+    var IS_ONLINE: Boolean = true
     var TIMESTAMP: Long = _
     val ERROR_LOG: StringBuffer = new StringBuffer("")
     var MESSAGES: StringBuffer = new StringBuffer("")
@@ -38,11 +39,20 @@ object Constants {
 
   /** 输出文件路径 **/
   object OutputPath {
+    private val dirAndFileName = (fileName: String) => if (App.IS_ONLINE) s"$ONLINE_DIR/$fileName" else s"$OFFLINE_DIR/$fileName"
     val SEPARATOR = "\t"
     private val ONLINE_DIR = s"${App.DIR}/output/online/${App.TODAY}/${App.STORE_ID}_${App.TIMESTAMP}"
-    val MESSAGES_PATH_ONLINE = s"$ONLINE_DIR/messages"
     private val OFFLINE_DIR = s"${App.DIR}/output/offline/${App.TODAY}/${App.TIMESTAMP}"
-    val MESSAGES_PATH_OFFLINE = s"$OFFLINE_DIR/messages"
+    val MONEY_AMOUNT_PATH = dirAndFileName("moneyAmount")
+    val ORDER_AMOUNT_PATH = dirAndFileName("orderAmount")
+    val CATEGORY_AMOUNT_PATH = dirAndFileName("category")
+    val ORDER_NUMBER_PATH = dirAndFileName("orderNumber")
+    val PER_CIGAR_PRICE_PATH = dirAndFileName("perCigarPrice")
+    val ACTIVE_CATEGORY_PATH = dirAndFileName("activeCategory")
+    val MONEY_AMOUNT_TOP5_PATH = dirAndFileName("moneyAmountTop5PerMonth")
+    val INDEXES_PATH = dirAndFileName("indexes")
+    val SCORE_PATH = dirAndFileName("scores")
+    val CREDIT_AMOUNT_PATH = dirAndFileName("creditAmount")
   }
 
   /** 表的模式 **/

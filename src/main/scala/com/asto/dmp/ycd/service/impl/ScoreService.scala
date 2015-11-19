@@ -1,9 +1,10 @@
 package com.asto.dmp.ycd.service.impl
 
+import com.asto.dmp.ycd.base.Constants
 import com.asto.dmp.ycd.dao.impl.BizDao
-import com.asto.dmp.ycd.mq.{MsgWrapper, Msg}
+import com.asto.dmp.ycd.mq.{MQAgent, MsgWrapper, Msg}
 import com.asto.dmp.ycd.service.Service
-import com.asto.dmp.ycd.util.{BizUtils, Utils}
+import com.asto.dmp.ycd.util.{FileUtils, Utils}
 
 object ScoreService {
 
@@ -196,23 +197,21 @@ object ScoreService {
   }
 
   def sendScores() {
+    val strMsgsOfAllStores = new StringBuffer()
     getAllScore.map(t => (t._1, t._2, t._3, t._4, t._5, t._6, t._7)).collect().foreach {
       eachStore =>
-        BizUtils.handleMessage(
-          MsgWrapper.getJson(
-            "得分",
-            List(
-              Msg("M_SCALE_SCORE", eachStore._2),
-              Msg("M_PROFIT_SCORE", eachStore._3),
-              Msg("M_GROWING_UP_SCORE", eachStore._4),
-              Msg("M_OPERATION_SCORE", eachStore._5),
-              Msg("M_MARKET_SCORE", eachStore._6),
-              Msg("M_PROP_CREDIT_SCORE", eachStore._7)
-            ),
-            eachStore._1
-          )
+        val msgs = List(
+          Msg("M_SCALE_SCORE", eachStore._2),
+          Msg("M_PROFIT_SCORE", eachStore._3),
+          Msg("M_GROWING_UP_SCORE", eachStore._4),
+          Msg("M_OPERATION_SCORE", eachStore._5),
+          Msg("M_MARKET_SCORE", eachStore._6),
+          Msg("M_PROP_CREDIT_SCORE", eachStore._7)
         )
+        MQAgent.send(MsgWrapper.getJson("得分", msgs, eachStore._1))
+        strMsgsOfAllStores.append(Msg.strMsgsOfAStore("得分", eachStore._1, msgs))
     }
+    FileUtils.saveAsTextFile(strMsgsOfAllStores.toString, Constants.OutputPath.SCORE_PATH)
   }
 }
 

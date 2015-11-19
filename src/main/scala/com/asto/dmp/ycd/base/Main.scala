@@ -1,9 +1,8 @@
 package com.asto.dmp.ycd.base
 
-import com.asto.dmp.ycd.dao.impl.BizDao
 import com.asto.dmp.ycd.mq.MQAgent
 import com.asto.dmp.ycd.service.impl.{LoanWarnService, FieldsCalculationService, CreditService, ScoreService}
-import com.asto.dmp.ycd.util.{FileUtils, DateUtils, Utils}
+import com.asto.dmp.ycd.util.{DateUtils, Utils}
 import org.apache.spark.Logging
 
 object Main extends Logging {
@@ -12,7 +11,6 @@ object Main extends Logging {
     if (argsIsIllegal(args)) return
     runServicesBy(args)
     closeResources()
-    saveMessages()
     printEndLogs(startTime)
   }
 
@@ -24,12 +22,15 @@ object Main extends Logging {
     args(0) match {
       case "100" =>
         Constants.App.STORE_ID = args(2)
+        Constants.App.IS_ONLINE = true
         logInfo(Utils.logWrapper(s"运行[在线模型-计算单个店铺],店铺ID为：${Constants.App.STORE_ID}"))
         runCommonServices()
       case "200" =>
+        Constants.App.IS_ONLINE = false
         logInfo(Utils.logWrapper("运行[离线模型-计算所有店铺]"))
         runCommonServices()
       case "201" =>
+        Constants.App.IS_ONLINE = false
         logInfo(Utils.logWrapper(s"运行[离线模型-计算贷后预警]"))
         runLoanWarnServices()
       case _ =>
@@ -99,12 +100,4 @@ object Main extends Logging {
     printRunningTime(startTime: Long)
   }
 
-  private def saveMessages() = {
-    var path: String = ""
-    if (Option(Constants.App.STORE_ID).isDefined)
-      path = Constants.OutputPath.MESSAGES_PATH_ONLINE
-    else
-      path = Constants.OutputPath.MESSAGES_PATH_OFFLINE
-    FileUtils.saveAsTextFile(Constants.App.MESSAGES.toString, path)
-  }
 }

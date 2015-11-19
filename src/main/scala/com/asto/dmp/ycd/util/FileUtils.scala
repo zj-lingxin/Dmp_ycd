@@ -27,11 +27,13 @@ object FileUtils extends Logging {
 
   def saveAsTextFile[T <: Product](rdd: RDD[T], savePath: String) = {
     deleteFilesInHDFS(savePath)
+    logInfo(Utils.logWrapper(s"往${savePath}中写入信息"))
     rdd.map(_.productIterator.mkString(Constants.OutputPath.SEPARATOR)).coalesce(1).saveAsTextFile(savePath)
   }
 
   def saveAsTextFile(text: String, savePath: String) = {
     deleteFilesInHDFS(savePath)
+    logInfo(Utils.logWrapper(s"往${savePath}中写入信息"))
     val out = FileSystem.get(conf).create(new Path(savePath))
     out.write(text.getBytes())
     out.flush()

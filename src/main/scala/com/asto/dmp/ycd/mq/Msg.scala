@@ -39,6 +39,18 @@ object Msg {
   def apply(quotaCode: String, quotaValue: Any, indexFlag: String = "2", targetTime: String = DateUtils.getStrDate("yyyyMM")) = {
     new Msg(quotaCode, quotaValue, indexFlag, targetTime)
   }
+  def strMsgsOfAStore(quotaItemName: String, propertyUuid: String, msgs: List[Msg]): String = {
+    val buffer = new StringBuffer()
+    for (msg <- msgs) {
+      buffer.append(s"$quotaItemName${Constants.OutputPath.SEPARATOR}")
+      buffer.append(s"${propertyUuid}${Constants.OutputPath.SEPARATOR}")
+      buffer.append(s"${msg.quotaCode}${Constants.OutputPath.SEPARATOR}")
+      buffer.append(s"${msg.indexFlag}${Constants.OutputPath.SEPARATOR}")
+      buffer.append(s"${msg.targetTime}${Constants.OutputPath.SEPARATOR}")
+      buffer.append(s"${msg.quotaValue}\n")
+    }
+    buffer.toString
+  }
 }
 
 class Msg(val quotaCode: String, val quotaValue: Any, val indexFlag: String = "2", val targetTime: String = DateUtils.getStrDate("yyyyMM"))
@@ -46,6 +58,19 @@ class Msg(val quotaCode: String, val quotaValue: Any, val indexFlag: String = "2
 object MsgWithName {
   def apply(quotaCode: String, quotaName: String, quotaValue: Any, indexFlag: String = "2", targetTime: String = DateUtils.getStrDate("yyyyMM")) = {
     new MsgWithName(quotaCode, quotaName, quotaValue, indexFlag, targetTime)
+  }
+  def strMsgsOfAStore(quotaItemName: String, propertyUuid: String, msgs: List[MsgWithName]) = {
+    val buffer = new StringBuffer()
+    for (msg <- msgs) {
+      buffer.append(s"$propertyUuid${Constants.OutputPath.SEPARATOR}")
+      buffer.append(s"$quotaItemName${Constants.OutputPath.SEPARATOR}")
+      buffer.append(s"${msg.quotaCode}${Constants.OutputPath.SEPARATOR}")
+      buffer.append(s"${msg.quotaName}${Constants.OutputPath.SEPARATOR}")
+      buffer.append(s"${msg.indexFlag}${Constants.OutputPath.SEPARATOR}")
+      buffer.append(s"${msg.targetTime}${Constants.OutputPath.SEPARATOR}")
+      buffer.append(s"${msg.quotaValue}\n")
+    }
+    buffer.toString
   }
 }
 
