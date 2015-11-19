@@ -15,10 +15,4 @@ object BizUtils {
     (now.get(Calendar.YEAR) * 12 + now.get(Calendar.MONTH)) -
       (theEarliestDate.get(Calendar.YEAR) * 12 + theEarliestDate.get(Calendar.MONTH))
   }
-
-  def handleMessage(msg: String) = {
-    MQAgent.send(msg)
-    Constants.App.MESSAGES.append(msg + "\n")
-  }
-
 }
