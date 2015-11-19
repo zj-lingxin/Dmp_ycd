@@ -65,21 +65,6 @@ object BizDao {
       .map(t => (t._1, t._2._1 / t._2._2.get)).persist()
   }
 
-  /*
-    /**
-     * 活跃品类数
-     * 当月月均活跃品类，为前三个月月均的订货量≥3的品类之和，如2015.10显示的活跃品类为，2015.8-2015.10三个月订货量≥9的，品类数之和；
-     * 计算12个月的活跃评类数。如果不能提取到14个月的数据，则最初两个月的数据为空，均值按近十个月计算；
-     * 返回：店铺id，日期，活跃品类数
-     * 注意：该方法的效率比较低，如果对系统执行时间有影响，可以对该方法进行优化。
-     */
-    def getActiveCategoryInLast12Months = {
-      val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()
-      storeIdArray.foreach(list ++= getActiveCategoryFor(_, (0, 11)))
-      Contexts.sparkContext.parallelize(list)
-    }
-  */
-
   /**
    * 活跃品类数
    * 当月月均活跃品类，为前三个月月均的订货量≥3的品类之和，如2015.10显示的活跃品类为，2015.8-2015.10三个月订货量≥9的，品类数之和；
@@ -155,13 +140,6 @@ object BizDao {
       .map(t => (t._1, t._2.sum))
       .sortBy(_._1)
       .map(t => (t._1._1, (t._1._2, t._2))).cache()
-
-    /*  BaseDao.getOrderProps(SQL().select("store_id,order_date,cigar_name").where(s" order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}' and order_amount > '0'"))
-        .map(a => (a(0).toString, DateUtils.strToStr(a(1).toString, "yyyy-MM-dd", "yyyyMM"), a(2).toString))
-        .distinct()
-        .map(t => (t._1,t._2))
-        .countByValue()
-        .toList.sorted.reverse*/
   }
 
   /**
@@ -205,16 +183,6 @@ object BizDao {
       .groupByKey().collect
   }
 
-  /*  def getActiveCategoryFor(storeId: String, timeRange: (Int, Int)) = {
-      val monthsNumFromEarliestOrderMap = monthsNumFromEarliestOrder.collect().toMap[String, Int]
-      val monthNum = Math.min(monthsNumFromEarliestOrderMap(storeId), 14)
-      val list = scala.collection.mutable.ListBuffer[(String, String, Long)]()
-      (timeRange._1 to timeRange._2).toStream.takeWhile(m => (m + 3) <= monthNum).foreach {
-        m => list += Tuple3(storeId, DateUtils.monthsAgo(m, "yyyyMM"), countNumbersOfActiveCategoryForMonth(m, storeId))
-      }
-      list
-    }*/
-
   /**
    * 获取当月活跃品类数
    */
@@ -228,14 +196,6 @@ object BizDao {
       .groupByKey()
       .map(t => (t._1, t._2.sum)).persist()
   }
-
-  /*  def countNumbersOfActiveCategoryForMonth(m: Int, storeId: String) = {
-      BaseDao.getOrderProps(SQL().select("cigar_name,order_date,order_amount").where(s" order_date >= '${DateUtils.monthsAgo(m + 3, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(m, "yyyy-MM-01")}' and store_id = '$storeId'"))
-        .map(a => (a(0).toString, a(2).toString.toInt))
-        .groupByKey()
-        .map(t => (t._1, t._2.sum))
-        .filter(t => t._2 >= 9).count()
-    }*/
 
   /**
    * 单品毛利率 = （零售指导价-成本价）/指导价*100%
@@ -368,6 +328,48 @@ object BizDao {
    */
   def offlineShoppingDistrictIndex = {
     Contexts.sparkContext.parallelize(storeIdArray).map((_, 0.8D)).persist()
+  }
+
+  /**
+   * 周交易额为0触发预警
+   * 返回（店铺ID,是否预警）
+   * @return
+   */
+  def weekOrderAmountWarn = {
+    val lastWeek = DateUtils.weeksAgo(1)
+    val storesHaveOrderAmountInLastWeek = BaseDao.getOrderProps(SQL().select("store_id,order_amount")
+      .where(s" order_date >= '${lastWeek._1}' and order_date <= '${lastWeek._2}'"))
+      .map(a => (a(0).toString, a(1).toString.toInt))
+      .groupByKey().map(t => (t._1, t._2.sum)).filter(t => t._2 != 0)
+    loanStore.leftOuterJoin(storesHaveOrderAmountInLastWeek).map(t => if (t._2._2 == None) (t._1, (t._2._2.getOrElse(0D), true)) else (t._1, (t._2._2.getOrElse(0D), false)))
+  }
+
+  def loanStore = {
+    BaseDao.getLoanStoreProps(SQL().select("store_id")).map(a => (a(0).toString, ""))
+  }
+
+  /**
+   * 预警:环比上四周周均下滑 30% 进货额。计算公式w5 /【(w1+w2+w3+w4)/4】 <= 0.7
+   * 返回（店铺ID,是否预警）
+   */
+  def moneyAmountWarn = {
+    val loanMoneyAmountRateWarnValue = 0.7
+    val moneyAmountlastWeek = moneyAmountFor((DateUtils.weeksAgo(1)))
+    //因为计算出来是四周的总和，即(w1+w2+w3+w4)，所以要对进货额/4
+    val moneyAmountFourWeekAvg = moneyAmountFor((DateUtils.weeksAgo(5)._1, DateUtils.weeksAgo(2)._2)).map(t => (t._1, t._2 / 4))
+    val rate = moneyAmountlastWeek.leftOuterJoin(moneyAmountFourWeekAvg)
+      .filter(_._2._2.isDefined)
+      .map(t => (t._1, t._2._1 / t._2._2.get))
+    loanStore.leftOuterJoin(rate)
+      .map(t => (t._1, Utils.retainDecimal(t._2._2.getOrElse(0D), 3)))
+      .map(t => if (t._2 > loanMoneyAmountRateWarnValue) (t._1, (t._2, false)) else (t._1, (t._2, true)))
+  }
+
+  def moneyAmountFor(dateRange: (String, String)) = {
+    BaseDao.getOrderProps(SQL().select("store_id,money_amount,order_date")
+      .where(s" order_date >= '${dateRange._1}' and order_date <= '${dateRange._2}'"))
+      .map(a => (a(0).toString, a(1).toString.toDouble))
+      .groupByKey().map(t => (t._1, Utils.retainDecimal(t._2.sum, 2)))
   }
 }
 

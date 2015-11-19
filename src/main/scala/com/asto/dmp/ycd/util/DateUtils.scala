@@ -3,7 +3,7 @@ package com.asto.dmp.ycd.util
 import java.text.SimpleDateFormat
 import java.util.{Date, Calendar}
 
-object DateUtils extends scala.Serializable{
+object DateUtils extends scala.Serializable {
   private val cal = Calendar.getInstance()
 
   /**
@@ -47,10 +47,24 @@ object DateUtils extends scala.Serializable{
    */
   def monthsAgoWithMaxDay(m: Int = 0, formatText: String = "yyyy-MM-dd"): String = {
     val cal = Calendar.getInstance()
-    cal.add(Calendar.MONTH, -m+1)
-    cal.set(Calendar.DATE,1)
+    cal.add(Calendar.MONTH, -m + 1)
+    cal.set(Calendar.DATE, 1)
     cal.add(Calendar.DATE, -1)
     getStrDate(cal, formatText)
+  }
+
+  def weeksAgo(m: Int = 0, formatText: String = "yyyy-MM-dd"):(String, String) = {
+    val weekBegin = Calendar.getInstance()
+    val weekEnd = Calendar.getInstance()
+    val dayOfWeekForEnglish = weekBegin.get(Calendar.DAY_OF_WEEK)
+    if (dayOfWeekForEnglish == 1) {
+      weekBegin.add(Calendar.DATE, -m * 7 - weekBegin.get(Calendar.DAY_OF_WEEK) - 5)
+      weekEnd.add(Calendar.DATE, -m * 7 - weekEnd.get(Calendar.DAY_OF_WEEK) + 1)
+    } else {
+      weekBegin.add(Calendar.DATE, -m * 7 - weekBegin.get(Calendar.DAY_OF_WEEK) + 2)
+      weekEnd.add(Calendar.DATE, -m * 7 - weekEnd.get(Calendar.DAY_OF_WEEK) + 8)
+    }
+    (getStrDate(weekBegin, formatText), getStrDate(weekEnd, formatText))
   }
 
   /**
@@ -108,7 +122,7 @@ object DateUtils extends scala.Serializable{
    * 将String类型的日期转化为Calendar
    */
   def strToCalendar(strDate: String, formatText: String = "yyyy-MM-dd"): Calendar = {
-    val sdf= new SimpleDateFormat(formatText)
+    val sdf = new SimpleDateFormat(formatText)
     val date = sdf.parse(strDate)
     val calendar = Calendar.getInstance()
     calendar.setTime(date)
@@ -116,16 +130,16 @@ object DateUtils extends scala.Serializable{
   }
 
   def strToDate(strDate: String, formatText: String = "yyyy-MM-dd"): Date = {
-    val sdf= new SimpleDateFormat(formatText)
+    val sdf = new SimpleDateFormat(formatText)
     sdf.parse(strDate)
   }
 
   def strToStr(strDate: String, oldFormat: String, newFormat: String) =
-    dateToStr(strToDate(strDate, oldFormat),newFormat)
+    dateToStr(strToDate(strDate, oldFormat), newFormat)
 
 
-  def dateToStr(date: Date, formatText: String = "yyyy-MM-dd" ): String = {
-    val sdf= new SimpleDateFormat(formatText)
+  def dateToStr(date: Date, formatText: String = "yyyy-MM-dd"): String = {
+    val sdf = new SimpleDateFormat(formatText)
     sdf.format(date)
   }
 

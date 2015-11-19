@@ -30,7 +30,9 @@ object Constants {
     val ORDER_DETAILS_ONLINE = s"$ONLINE_DIR/tobacco_order_details/*"
     //离线
     private val OFFLINE_DIR = s"${App.DIR}/input/offline/${App.TODAY}"
-    val ORDER_DETAILS_OFFLINE = s"$OFFLINE_DIR/tobacco_order_details/*"
+    val ORDER_DETAILS_OFFLINE = s"$OFFLINE_DIR/tobacco_order_details_${App.TIMESTAMP}/*"
+
+    val LOAN_STORE = s"$OFFLINE_DIR/loan_store_${App.TIMESTAMP}/*"
   }
   
 
@@ -49,7 +51,9 @@ object Constants {
     val ORDER_DETAILS = "store_id,order_id,order_date,cigar_name,wholesale_price,purchase_amount,order_amount,money_amount,producer_name"
     //卷烟名称,品牌系列,零售指导价(元/条),生产厂家
     val TOBACCO_PRICE = "cigar_name,cigar_brand,retail_price,producer_name"
-    //ORDER_DETAILS和TOBACCO_PRICE关联的数据： 店铺id, 订单号, 订货日期, 卷烟名称,（单条烟的）批发价|成本价,要货量(想要多少货),订货量(厂家给的货，也就是实际拿到的货),金额（要货量 * （单条烟的）批发价）,品牌系列,零售指导价(元/条),生产厂家
+    //ORDER_DETAILS和TOBACCO_PRICE关联的数据： 店铺id, 订单号, 订货日期, 卷烟名称,（单条烟的）批发价|成本价,要货量(想要多少货),订货量(厂家给的货，也就是实际拿到的货),金额（订货量 * （单条烟的）批发价）,品牌系列,零售指导价(元/条),生产厂家
     val ORDER = "store_id,order_id,order_date,cigar_name,wholesale_price,purchase_amount,order_amount,money_amount,cigar_brand,retail_price,producer_name"
+    //进入贷后的店铺id
+    val LOAN_STORE = "store_id"
   }
 }

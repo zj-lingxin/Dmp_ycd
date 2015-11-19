@@ -1,7 +1,8 @@
 package com.asto.dmp.ycd.base
 
+import com.asto.dmp.ycd.dao.impl.BizDao
 import com.asto.dmp.ycd.mq.MQAgent
-import com.asto.dmp.ycd.service.impl.{FieldsCalculationService, CreditService, ScoreService}
+import com.asto.dmp.ycd.service.impl.{LoanWarnService, FieldsCalculationService, CreditService, ScoreService}
 import com.asto.dmp.ycd.util.{FileUtils, DateUtils, Utils}
 import org.apache.spark.Logging
 
@@ -9,39 +10,48 @@ object Main extends Logging {
   def main(args: Array[String]) {
     val startTime = System.currentTimeMillis()
     if (argsIsIllegal(args)) return
-    useArgs(args)
-    runAllServices()
+    runServicesBy(args)
     closeResources()
     saveMessages()
     printEndLogs(startTime)
   }
 
-  /**
-   * 对传入的参数进行赋值
-   */
-  private def useArgs(args: Array[String]) {
-    Constants.App.TIMESTAMP = args(0).toLong
-    args.length match {
-      case 1 =>
-        logInfo(Utils.logWrapper("运行离线模型，计算所有店铺"))
-      case 2 =>
-        Constants.App.STORE_ID = args(1)
-        logInfo(Utils.logWrapper(s"运行在线模型，计算店铺ID为：${Constants.App.STORE_ID}"))
-      case _ =>
-        logInfo(Utils.logWrapper(s"传入参数有误"))
-    }
-
+  private def runServicesBy(args: Array[String]) {
+    Constants.App.TIMESTAMP = args(1).toLong
     //从外部传入的是秒级别的时间戳，所以要乘以1000
     Constants.App.TODAY = DateUtils.timestampToStr(Constants.App.TIMESTAMP * 1000, "yyyyMM/dd")
+
+    args(0) match {
+      case "100" =>
+        Constants.App.STORE_ID = args(2)
+        logInfo(Utils.logWrapper(s"运行[在线模型-计算单个店铺],店铺ID为：${Constants.App.STORE_ID}"))
+        runCommonServices()
+      case "200" =>
+        logInfo(Utils.logWrapper("运行[离线模型-计算所有店铺]"))
+        runCommonServices()
+      case "201" =>
+        logInfo(Utils.logWrapper(s"运行[离线模型-计算贷后预警]"))
+        runLoanWarnServices()
+      case _ =>
+        logInfo(
+          Utils.logWrapper(
+            s"可选模型参数如下:\n" +
+              s"[在线模型-计算单个店铺]:100,时间戳,店铺Id\n" +
+              s"[离线模型-计算所有店铺]:200,时间戳\n" +
+              s"[离线模型-计算贷后预警]:201,时间戳\n"
+          )
+        )
+    }
   }
 
-  /**
-   * 运行所有的模型
-   */
-  private def runAllServices() {
+  private def runCommonServices() {
     new FieldsCalculationService().run()
     new ScoreService().run()
     new CreditService().run()
+  }
+
+  private def runLoanWarnServices() {
+    new LoanWarnService().run()
   }
 
   /**
@@ -56,8 +66,8 @@ object Main extends Logging {
    * 判断传入的参数是否合法
    */
   private def argsIsIllegal(args: Array[String]) = {
-    if (Option(args).isEmpty || args.length <= 0 || args.length >= 3) {
-      logError(Utils.logWrapper("请传入程序参数:时间戳[args(0)]、店铺id[args(1)](可选)"))
+    if (Option(args).isEmpty || args.length < 2) {
+      logError(Utils.logWrapper("请传入程序参数:业务编号,时间戳,[店铺Id]"))
       true
     } else {
       false
@@ -91,7 +101,7 @@ object Main extends Logging {
 
   private def saveMessages() = {
     var path: String = ""
-    if(Option(Constants.App.STORE_ID).isDefined)
+    if (Option(Constants.App.STORE_ID).isDefined)
       path = Constants.OutputPath.MESSAGES_PATH_ONLINE
     else
       path = Constants.OutputPath.MESSAGES_PATH_OFFLINE
