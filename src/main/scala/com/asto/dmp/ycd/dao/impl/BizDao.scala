@@ -180,7 +180,7 @@ object BizDao {
       .groupByKey()
       .map(t => (t._1, t._2.toList.sorted.reverse.take(5)))
       .map(t => (t._1._1, (t._1._2, t._2)))
-      .groupByKey().collect
+      .groupByKey().collect()
   }
 
   /**
@@ -354,10 +354,12 @@ object BizDao {
    */
   def moneyAmountWarn = {
     val loanMoneyAmountRateWarnValue = 0.7
-    val moneyAmountlastWeek = moneyAmountFor((DateUtils.weeksAgo(1)))
+    val moneyAmountLastWeek = moneyAmountFor((DateUtils.weeksAgo(1)))
     //因为计算出来是四周的总和，即(w1+w2+w3+w4)，所以要对进货额/4
-    val moneyAmountFourWeekAvg = moneyAmountFor((DateUtils.weeksAgo(5)._1, DateUtils.weeksAgo(2)._2)).map(t => (t._1, t._2 / 4))
-    val rate = moneyAmountlastWeek.leftOuterJoin(moneyAmountFourWeekAvg)
+    val moneyAmountFourWeekAvg = {
+      moneyAmountFor((DateUtils.weeksAgo(5)._1, DateUtils.weeksAgo(2)._2)).map(t => (t._1, t._2 / 4))
+    }
+    val rate = moneyAmountLastWeek.leftOuterJoin(moneyAmountFourWeekAvg)
       .filter(_._2._2.isDefined)
       .map(t => (t._1, t._2._1 / t._2._2.get))
     loanStore.leftOuterJoin(rate)
