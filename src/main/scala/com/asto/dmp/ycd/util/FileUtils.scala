@@ -35,7 +35,7 @@ object FileUtils extends Logging {
     deleteFilesInHDFS(savePath)
     logInfo(Utils.logWrapper(s"往${savePath}中写入信息"))
     val out = FileSystem.get(conf).create(new Path(savePath))
-    out.write(text.getBytes())
+    out.write(text.getBytes)
     out.flush()
     out.close()
   }

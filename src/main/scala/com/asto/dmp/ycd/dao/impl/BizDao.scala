@@ -331,7 +331,7 @@ object BizDao {
   }
 
   /**
-   * 周交易额为0触发预警
+   * 周订货量为0触发预警,
    * 返回（店铺ID,是否预警）
    * @return
    */
@@ -341,7 +341,7 @@ object BizDao {
       .where(s" order_date >= '${lastWeek._1}' and order_date <= '${lastWeek._2}'"))
       .map(a => (a(0).toString, a(1).toString.toInt))
       .groupByKey().map(t => (t._1, t._2.sum)).filter(t => t._2 != 0)
-    loanStore.leftOuterJoin(storesHaveOrderAmountInLastWeek).map(t => if (t._2._2 == None) (t._1, (t._2._2.getOrElse(0D), true)) else (t._1, (t._2._2.getOrElse(0D), false)))
+    loanStore.leftOuterJoin(storesHaveOrderAmountInLastWeek).map(t => if (t._2._2 == None) (t._1, (t._2._2.getOrElse(0), true)) else (t._1, (t._2._2.getOrElse(0), false)))
   }
 
   def loanStore = {

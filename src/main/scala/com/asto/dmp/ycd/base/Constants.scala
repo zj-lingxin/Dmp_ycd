@@ -53,6 +53,7 @@ object Constants {
     val INDEXES_PATH = dirAndFileName("indexes")
     val SCORE_PATH = dirAndFileName("scores")
     val CREDIT_AMOUNT_PATH = dirAndFileName("creditAmount")
+    val LOAN_WARN_PATH = s"$OFFLINE_DIR/loanWarn"
   }
 
   /** 表的模式 **/
