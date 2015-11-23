@@ -203,7 +203,7 @@ object BizDao {
    * 返回：店铺id，年月，卷烟牌子，毛利率
    */
   def grossMarginPerMonthCategory = {
-    val array = BaseDao.getOrderProps(SQL().select("store_id,order_date,money_amount,order_amount,retail_price,cigar_name"))
+    val array = BaseDao.getOrderProps(SQL().select("store_id,order_date,money_amount,order_amount,retail_price,cigar_name").where("retail_price <> 'null'"))
       .map(a => ((a(0).toString, a(1).toString.substring(0, 7), a(5).toString), (a(2).toString.toDouble, a(3).toString.toInt * a(4).toString.toDouble)))
       .groupByKey()
       .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
@@ -222,7 +222,7 @@ object BizDao {
    * 返回：店铺id，日期，每月毛利率
    */
   def grossMarginPerMonthAll = {
-    val array = BaseDao.getOrderProps(SQL().select("store_id,order_date,money_amount,order_amount,retail_price"))
+    val array = BaseDao.getOrderProps(SQL().select("store_id,order_date,money_amount,order_amount,retail_price").where("retail_price <> 'null'"))
       .map(a => ((a(0).toString, a(1).toString.substring(0, 7)), (a(2).toString.toDouble, a(3).toString.toInt * a(4).toString.toDouble)))
       .groupByKey()
       .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
@@ -239,7 +239,7 @@ object BizDao {
     BaseDao.getOrderProps(
       SQL()
         .select("store_id,money_amount,order_amount,retail_price")
-        .where(s" order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'")
+        .where(s" retail_price <> 'null' and order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'")
     )
       .map(a => (a(0), (a(1).toString.toDouble, a(2).toString.toInt * a(3).toString.toDouble)))
       .groupByKey()
@@ -295,8 +295,10 @@ object BizDao {
   }
 
   private def getAllCategoryConcentration = {
-    selectLastMonthsData("store_id,cigar_name,order_amount,retail_price", 12)
-      .map(a => (a(0).toString, a(1).toString, a(2).toString.toInt * a(3).toString.toDouble))
+    BaseDao.getOrderProps(
+      SQL().select("store_id,cigar_name,order_amount,retail_price")
+        .where(s" retail_price <> 'null' and order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'")
+    ).map(a => (a(0).toString, a(1).toString, a(2).toString.toInt * a(3).toString.toDouble))
       .map(t => ((t._1, t._2), t._3))
       .groupByKey()
       .map(t => (t._1, t._2.sum))
@@ -305,8 +307,10 @@ object BizDao {
   }
 
   private def getLast12MonthsSales = {
-    selectLastMonthsData("store_id,order_amount,retail_price", 12)
-      .map(a => (a(0).toString, a(1).toString.toInt * a(2).toString.toDouble))
+    BaseDao.getOrderProps(
+      SQL().select("store_id,order_amount,retail_price").
+        where(s"retail_price <> 'null' and order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'")
+    ).map(a => (a(0).toString, a(1).toString.toInt * a(2).toString.toDouble))
       .map(t => (t._1, t._2))
       .groupByKey()
       .map(t => (t._1, t._2.sum)) //((33010220120807247A,300.0),七匹狼(蓝))
@@ -341,7 +345,7 @@ object BizDao {
       .where(s" order_date >= '${lastWeek._1}' and order_date <= '${lastWeek._2}'"))
       .map(a => (a(0).toString, a(1).toString.toInt))
       .groupByKey().map(t => (t._1, t._2.sum)).filter(t => t._2 != 0)
-    loanStore.leftOuterJoin(storesHaveOrderAmountInLastWeek).map(t => if (t._2._2 == None) (t._1, (t._2._2.getOrElse(0), true)) else (t._1, (t._2._2.getOrElse(0), false)))
+    loanStore.leftOuterJoin(storesHaveOrderAmountInLastWeek).map(t => if (t._2._2.isEmpty) (t._1, (t._2._2.getOrElse(0), true)) else (t._1, (t._2._2.getOrElse(0), false)))
   }
 
   def loanStore = {
@@ -354,7 +358,7 @@ object BizDao {
    */
   def moneyAmountWarn = {
     val loanMoneyAmountRateWarnValue = 0.7
-    val moneyAmountLastWeek = moneyAmountFor((DateUtils.weeksAgo(1)))
+    val moneyAmountLastWeek = moneyAmountFor(DateUtils.weeksAgo(1))
     //因为计算出来是四周的总和，即(w1+w2+w3+w4)，所以要对进货额/4
     val moneyAmountFourWeekAvg = {
       moneyAmountFor((DateUtils.weeksAgo(5)._1, DateUtils.weeksAgo(2)._2)).map(t => (t._1, t._2 / 4))

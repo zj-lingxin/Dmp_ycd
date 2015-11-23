@@ -27,7 +27,7 @@ object BaseDao extends Dao {
       .map(a => (a(0).toString, (a(1).toString, a(2).toString, a(3).toString))).distinct()
     val orderDetailsRDD = getOrderDetailsProps(orderSql)
       .map(a => (a(0).toString, (a(1).toString, a(2).toString, a(3).toString, a(4).toString, a(5).toString, a(6).toString, a(7).toString)))
-    tobaccoPriceRDD.leftOuterJoin(orderDetailsRDD).filter(_._2._2.isDefined).map(t => (t._2._2.get._1, t._2._2.get._2, t._2._2.get._3, t._1, t._2._2.get._4, t._2._2.get._5, t._2._2.get._6, t._2._2.get._7, t._2._1._1, t._2._1._2, t._2._1._3))
+    tobaccoPriceRDD.rightOuterJoin(orderDetailsRDD).map(t => (t._1,(t._2._1.getOrElse((null,null,null)),t._2._2))).map(t => (t._2._2._1, t._2._2._2, t._2._2._3, t._1, t._2._2._4, t._2._2._5, t._2._2._6, t._2._2._7, t._2._1._1, t._2._1._2, t._2._1._3))
   }
 
   def getOrderProps(sql: SQL = new SQL()) = getProps(orderAndPrice(), Constants.Schema.ORDER, "full_fields_order", sql)
