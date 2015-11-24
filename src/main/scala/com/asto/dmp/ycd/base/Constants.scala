@@ -59,11 +59,11 @@ object Constants {
   /** 表的模式 **/
   object Schema {
     //烟草订单详情：店铺id,订单号,订货日期,卷烟名称,批发价,要货量(想要多少货),订货量(厂家给的货，也就是实际拿到的货),金额,生产厂家
-    val ORDER_DETAILS = "store_id,order_id,order_date,cigar_name,wholesale_price,purchase_amount,order_amount,money_amount,producer_name"
+    val ORDER_DETAILS = "store_id,order_id,order_date,cigar_name,wholesale_price,purchase_amount,order_amount,money_amount,producer_name,area_code"
     //卷烟名称,品牌系列,零售指导价(元/条),生产厂家
-    val TOBACCO_PRICE = "cigar_name,cigar_brand,retail_price,producer_name"
+    val TOBACCO_PRICE = "cigar_name,cigar_brand,retail_price,producer_name,wholesale_price,area_code"
     //ORDER_DETAILS和TOBACCO_PRICE关联的数据： 店铺id, 订单号, 订货日期, 卷烟名称,（单条烟的）批发价|成本价,要货量(想要多少货),订货量(厂家给的货，也就是实际拿到的货),金额（订货量 * （单条烟的）批发价）,品牌系列,零售指导价(元/条),生产厂家
-    val ORDER = "store_id,order_id,order_date,cigar_name,wholesale_price,purchase_amount,order_amount,money_amount,cigar_brand,retail_price,producer_name"
+    val ORDER = "store_id,order_id,order_date,cigar_name,wholesale_price,purchase_amount,order_amount,money_amount,cigar_brand,retail_price,producer_name,area_code"
     //进入贷后的店铺id
     val LOAN_STORE = "store_id"
   }

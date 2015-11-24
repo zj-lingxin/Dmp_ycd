@@ -4,9 +4,11 @@ import com.asto.dmp.ycd.base.Constants
 import com.asto.dmp.ycd.dao.impl.BizDao
 import com.asto.dmp.ycd.mq.{MQAgent, MsgWrapper, Msg}
 import com.asto.dmp.ycd.service.Service
+import com.asto.dmp.ycd.util.mail.MailAgent
 import com.asto.dmp.ycd.util.{FileUtils, Utils}
+import org.apache.spark.Logging
 
-object ScoreService {
+object ScoreService extends Logging {
 
   /** 权重 **/
   object Weight {
@@ -110,12 +112,12 @@ object ScoreService {
    * 返回：(storeId,(salesRentRatioGPA,grossMarginLastYearGPA))
    * 中文：(店铺id  ,(   销售额租金比绩点,           1年毛利率绩点))
    */
-  private def getProfitGPA = {
+  def getProfitGPA = {
     val salesRentRatioGPA = BizDao.salesRentRatio
       .map(t => (t._1, calcSalesRentRatioGPA(t._2)))
     val grossMarginLastYearGPA = BizDao.grossMarginLastYear
       .map(t => (t._1, calcGrossMarginLastYearGPA(t._2)))
-    salesRentRatioGPA.leftOuterJoin(grossMarginLastYearGPA).map(t => (t._1, (t._2._1, t._2._2.get)))
+    salesRentRatioGPA.leftOuterJoin(grossMarginLastYearGPA).map(t => (t._1, (t._2._1, t._2._2.getOrElse(0D))))
   }
 
   /**
@@ -144,7 +146,7 @@ object ScoreService {
     val categoryConcentrationGPA = BizDao.categoryConcentration
       .map(t => (t._1, calcCategoryConcentrationGPA(t._2)))
     val tempOperationsGPA1 = perCigarAvgPriceOfAnnAvgGPA.leftOuterJoin(monthsNumFromEarliestOrderGPA).map(t => (t._1, (t._2._1, t._2._2.get)))
-    val tempOperationsGPA2 = activeCategoryInLastMonthGPA.leftOuterJoin(categoryConcentrationGPA).map(t => (t._1, (t._2._1, t._2._2.get)))
+    val tempOperationsGPA2 = activeCategoryInLastMonthGPA.leftOuterJoin(categoryConcentrationGPA).map(t => (t._1, (t._2._1, t._2._2.getOrElse(0D))))
     tempOperationsGPA1.leftOuterJoin(tempOperationsGPA2).map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._2.get._1, t._2._2.get._2)))
   }
 
@@ -166,8 +168,9 @@ object ScoreService {
    * activeCategoryInLastMonthGPA,categoryConcentrationGPA,offlineShoppingDistrictIndexGPA))
    * 中文：(店铺id  ,( 订货额年均值绩点,每条均价年均值绩点,销售额租金比绩点,1年毛利率绩点,月销售增长比绩点,订货条数年均值绩点,经营期限绩点,活跃品类绩点,品类集中度绩点,线下商圈指数))
    */
-  private def getAllGPA = {
+  def getAllGPA = {
     getScaleGPA.leftOuterJoin(getProfitGPA) //(33010120120716288A,((0.56734,0.49166666666666664),Some((0.0,0.5999999999999996))))
+
       .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._2.get._1, t._2._2.get._2))) //(33010120120716288A,(0.56734,0.49166666666666664,0.0,0.5999999999999996))
       .leftOuterJoin(getGrowingUpGPA)
       .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._2.get))) //(33010120120716288A,(0.56734,0.49166666666666664,0.0,0.5999999999999996,0.76))
@@ -187,7 +190,7 @@ object ScoreService {
    * 输出：店铺id，规模得分	，盈利得分，成长得分，运营得分	，市场得分，总得分
    */
   def getAllScore = {
-    getAllGPA.map(t => (t._1, getScaleScore(t._2._1, t._2._2), getProfitScore(t._2._3, t._2._4), getGrowingUpScore(t._2._5), getOperationScore(t._2._6, t._2._7, t._2._8, t._2._9), getMarketScore(t._2._10), getTotalScore(t._2))).cache()
+    getAllGPA.map(t => (t._1, getScaleScore(t._2._1, t._2._2), getProfitScore(t._2._3, t._2._4.toString.toDouble), getGrowingUpScore(t._2._5), getOperationScore(t._2._6, t._2._7, t._2._8, t._2._9), getMarketScore(t._2._10), getTotalScore(t._2))).cache()
   }
 
   private def rangeOfGPA(GPA: Double) = {

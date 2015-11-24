@@ -17,23 +17,23 @@ object FieldsCalculationService {
    */
   def getCalcFields = {
     monthsNumFromEarliestOrder.leftOuterJoin(moneyAmountAnnAvg)
-      .map(t => (t._1, (t._2._1, t._2._2.get)))
+      .map(t => (t._1, (t._2._1, t._2._2.getOrElse(0))))
       .leftOuterJoin(orderAmountAnnAvg)
-      .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._2.get))) // monthsNumFromEarliestOrder,payMoneyAnnAvg,orderAmountAnnAvg
+      .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._2.getOrElse(0)))) // monthsNumFromEarliestOrder,payMoneyAnnAvg,orderAmountAnnAvg
       .leftOuterJoin(perCigarAvgPriceOfAnnAvg)
-      .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._2.get))) //monthsNumFromEarliestOrder,payMoneyAnnAvg,orderAmountAnnAvg,perCigarAvgPriceOfAnnAvg
+      .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._2.getOrElse(0)))) //monthsNumFromEarliestOrder,payMoneyAnnAvg,orderAmountAnnAvg,perCigarAvgPriceOfAnnAvg
       .leftOuterJoin(getActiveCategoryInLastMonth)
-      .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._2.get))) //
+      .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._2.getOrElse(0)))) //
       .leftOuterJoin(grossMarginLastYear)
-      .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._1._5, t._2._2.get)))
+      .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._1._5, t._2._2.getOrElse(0D))))
       .leftOuterJoin(monthlySalesGrowthRatio)
-      .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._1._5, t._2._1._6, t._2._2.get)))
+      .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._1._5, t._2._1._6, t._2._2.getOrElse(0D))))
       .leftOuterJoin(salesRentRatio)
-      .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._1._5, t._2._1._6, t._2._1._7, t._2._2.get)))
+      .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._1._5, t._2._1._6, t._2._1._7, t._2._2.getOrElse(0D))))
       .leftOuterJoin(categoryConcentration)
-      .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._1._5, t._2._1._6, t._2._1._7, t._2._1._8, t._2._2.get)))
+      .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._1._5, t._2._1._6, t._2._1._7, t._2._1._8, t._2._2.getOrElse(0D))))
       .leftOuterJoin(offlineShoppingDistrictIndex)
-      .map(t => (t._1, t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._1._5, t._2._1._6, t._2._1._7, t._2._1._8, t._2._1._9, t._2._2.get))
+      .map(t => (t._1, t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._1._5, t._2._1._6, t._2._1._7, t._2._1._8, t._2._1._9, t._2._2.getOrElse(0D)))
   }
 
 
@@ -42,7 +42,7 @@ object FieldsCalculationService {
    */
   private def sendIndexes() {
     val strMsgsOfAllStores = new StringBuffer()
-    //FieldsCalculationService.getCalcFields.foreach(println)
+
     FieldsCalculationService.getCalcFields.collect().foreach {
       eachStore =>
         val msgs = List[Msg](
