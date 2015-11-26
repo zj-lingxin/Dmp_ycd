@@ -18,21 +18,25 @@ object Main extends Logging {
     Constants.App.TIMESTAMP = args(1).toLong
     //从外部传入的是秒级别的时间戳，所以要乘以1000
     Constants.App.TODAY = DateUtils.timestampToStr(Constants.App.TIMESTAMP * 1000, "yyyyMM/dd")
-
+    Constants.App.RUN_CODE = args(0)
     args(0) match {
       case "100" =>
         Constants.App.STORE_ID = args(2)
         Constants.App.IS_ONLINE = true
         logInfo(Utils.logWrapper(s"运行[在线模型-计算单个店铺],店铺ID为：${Constants.App.STORE_ID}"))
-        runCommonServices()
+        new FieldsCalculationService().run()
+        new ScoreService().run()
+        new CreditService().run()
       case "200" =>
         Constants.App.IS_ONLINE = false
         logInfo(Utils.logWrapper("运行[离线模型-计算所有店铺]"))
-        runCommonServices()
+        new FieldsCalculationService().run()
+        new ScoreService().run()
+        //授信额度这里不需要计算
       case "201" =>
         Constants.App.IS_ONLINE = false
         logInfo(Utils.logWrapper(s"运行[离线模型-计算贷后预警]"))
-        runLoanWarnServices()
+        new LoanWarnService().run()
       case _ =>
         logInfo(
           Utils.logWrapper(
@@ -43,16 +47,6 @@ object Main extends Logging {
           )
         )
     }
-  }
-
-  private def runCommonServices() {
-    new FieldsCalculationService().run()
-    new ScoreService().run()
-    new CreditService().run()
-  }
-
-  private def runLoanWarnServices() {
-    new LoanWarnService().run()
   }
 
   /**

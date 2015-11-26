@@ -12,6 +12,7 @@ object Constants {
     var TODAY: String = _
     var STORE_ID: String = _
     var IS_ONLINE: Boolean = true
+    var RUN_CODE: String = _
     var TIMESTAMP: Long = _
     val ERROR_LOG: StringBuffer = new StringBuffer("")
     var MESSAGES: StringBuffer = new StringBuffer("")
