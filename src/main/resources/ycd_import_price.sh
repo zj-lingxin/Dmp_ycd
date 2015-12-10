@@ -14,8 +14,8 @@ day=`date +%d`
 
 
 if [ ! -d $PROJECT_LOG_HOME/offline/$date_cur/import_prices ];then
-   mkdir $PROJECT_LOG_HOME/offline/$date_cur/import_prices
- fi
+  mkdir -p $PROJECT_LOG_HOME/offline/$date_cur/import_prices
+fi
 
 echo "start!!"${store_id}" time:"${time_cur} &>> $PROJECT_LOG_HOME/$date_cur/process.log
 

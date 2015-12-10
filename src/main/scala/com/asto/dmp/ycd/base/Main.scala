@@ -1,5 +1,6 @@
 package com.asto.dmp.ycd.base
 
+import com.asto.dmp.ycd.dao.impl.{BizDao, BaseDao}
 import com.asto.dmp.ycd.mq.MQAgent
 import com.asto.dmp.ycd.service.impl.{LoanWarnService, FieldsCalculationService, CreditService, ScoreService}
 import com.asto.dmp.ycd.util.{DateUtils, Utils}

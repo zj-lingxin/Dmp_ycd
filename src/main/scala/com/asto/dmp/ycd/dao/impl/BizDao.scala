@@ -204,6 +204,8 @@ object BizDao {
    */
   def grossMarginPerMonthCategory = {
     val array = BaseDao.getOrderProps(SQL().select("store_id,order_date,money_amount,order_amount,retail_price,cigar_name").where("retail_price <> 'null'"))
+      //零售指导价和成本价为0时,不参与计算,所以使用filter过滤掉
+      .filter(a => a(2).toString != "0" && a(4).toString != "0" )
       .map(a => ((a(0).toString, a(1).toString.substring(0, 7), a(5).toString), (a(2).toString.toDouble, a(3).toString.toInt * a(4).toString.toDouble)))
       .groupByKey()
       .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
@@ -223,6 +225,8 @@ object BizDao {
    */
   def grossMarginPerMonthAll = {
     val array = BaseDao.getOrderProps(SQL().select("store_id,order_date,money_amount,order_amount,retail_price").where("retail_price <> 'null'"))
+      //零售指导价和成本价为0时,不参与计算,所以使用filter过滤掉
+      .filter(a => a(2).toString != "0" && a(4).toString != "0" )
       .map(a => ((a(0).toString, a(1).toString.substring(0, 7)), (a(2).toString.toDouble, a(3).toString.toInt * a(4).toString.toDouble)))
       .groupByKey()
       .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
@@ -241,6 +245,8 @@ object BizDao {
         .select("store_id,money_amount,order_amount,retail_price")
         .where(s" retail_price <> 'null' and order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'")
     )
+      //零售指导价和成本价为0时,不参与计算,所以使用filter过滤掉
+      .filter(a => a(1).toString != "0" && a(3).toString != "0" )
       .map(a => (a(0), (a(1).toString.toDouble, a(2).toString.toInt * a(3).toString.toDouble)))
       .groupByKey()
       .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
