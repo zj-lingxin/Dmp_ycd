@@ -1,13 +1,3 @@
-mysql_jdbc="192.168.7.7:3306/asto_ec_origin"
-mysql_username="root"
-mysql_password="password"
-
-PROJECT_HOME=/data/work/ycd
-PROJECT_LOG_HOME=$PROJECT_HOME/logs
-
-date_cur=`date +%Y%m%d`
-time_cur=`date +%s`
-year_month=`date +%Y%m`
 source /etc/profile
 
 mysql_jdbc="192.168.7.7:3306/asto_ec_origin"
