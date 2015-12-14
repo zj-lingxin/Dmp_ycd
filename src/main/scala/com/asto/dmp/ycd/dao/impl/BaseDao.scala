@@ -31,10 +31,10 @@ object BaseDao extends Dao {
     //如果是离线模型，过滤掉状态为“作废”的订单
     //在线模型对“作废”的订单的过滤已经在Sqoop的mysql语句中处理了。
     //由于离线模型的数据数量太多，大数据量加上复杂的表关联时，sqoop导入数据时会卡死。所以对“作废”订单的过滤只能在这里过滤了
-    if(!Constants.App.IS_ONLINE) {
-      val invalidOrderIds =  getInvalidOrderId().filter(_.size == 1).map(_(0).toString).collect()
-      resultRDD = resultRDD.filter(t => !invalidOrderIds.contains(t._2)) //过滤出有效的数据
-    }
+    /*if(!Constants.App.IS_ONLINE) {*/
+    val invalidOrderIds =  getInvalidOrderId().filter(_.size == 1).map(_(0).toString).collect()
+    resultRDD = resultRDD.filter(t => !invalidOrderIds.contains(t._2)) //过滤出有效的数据
+   /* }*/
     resultRDD
   }
 

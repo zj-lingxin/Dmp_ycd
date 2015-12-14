@@ -38,9 +38,11 @@ object Constants {
 
     //作废的订单Id获取路径,离线批量模型需要用到。在线模型对“作废”的订单的过滤已经在Sqoop的mysql语句中过滤了。
     //由于离线模型的数据数量太多，大数据量加上复杂的表关联时，sqoop导入数据时会卡死。所以对“作废”订单的过滤只能使用spark过滤了
-    val INVALID_ORDER_ID = s"$OFFLINE_DIR/invalid_order_id_${App.TIMESTAMP}/*"
+    //val INVALID_ORDER_ID = s"$OFFLINE_DIR/invalid_order_id_${App.TIMESTAMP}/*"
 
-    val LOAN_STORE = s"$OFFLINE_DIR/loan_store_${App.TIMESTAMP}/*"
+    val INVALID_ORDER_ID = dirAndFileName("invalid_order_id")
+    //val LOAN_STORE = s"$OFFLINE_DIR/loan_store_${App.TIMESTAMP}/*"
+    val LOAN_STORE = dirAndFileName("loan_store")
   }
   
 
