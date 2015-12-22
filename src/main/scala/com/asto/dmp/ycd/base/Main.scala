@@ -31,8 +31,11 @@ object Main extends Logging {
       case "200" =>
         Constants.App.IS_ONLINE = false
         logInfo(Utils.logWrapper("运行[离线模型-计算所有店铺]"))
-        new FieldsCalculationService().run()
-        new ScoreService().run()
+
+        BizDao.moneyAmountPerMonth.foreach(println)
+        BizDao.moneyAmountPerMonthNew.foreach(println)
+     /*   new FieldsCalculationService().run()
+        new ScoreService().run()*/
         //授信额度这里不需要计算
       case "201" =>
         Constants.App.IS_ONLINE = false

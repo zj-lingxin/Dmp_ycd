@@ -5,64 +5,156 @@ import com.asto.dmp.ycd.dao.SQL
 import com.asto.dmp.ycd.util.{BizUtils, DateUtils, Utils}
 
 object BizDao {
+  private val maxCalcMonths = 12
+
+  //店铺默认经营时间，单位：月
+  private val defaultStoreAge = 18
+
+  val storeIdCalcMonthsRDD = BaseDao.getStoreIdCalcMonthsProps().map(a => (a(0).toString, a(1).toString().toInt)).groupByKey().map(t => (t._1, t._2.min)).persist()
+
+  val storeIdCalcMonthsArray = storeIdCalcMonthsRDD.collect()
+
+  val storeIdCalcMonthsMap = storeIdCalcMonthsArray.toMap
+
+  /**
+   * 根据传入的storeId和orderDate，过滤掉不需要计算的数据.根据店铺所在区域不同，分别过滤出只需要计算近1、3、12个月的订单数据
+   */
+  private def filterData(storeId: String, orderDate: String): Boolean = {
+    orderDate >= DateUtils.monthsAgo(storeIdCalcMonthsMap.get(storeId).getOrElse(1), "yyyy-MM-01")
+  }
 
   /**
    * 经营期限（月）= 申请贷款月份(系统运行时间) - 最早一笔网上订单的月份
+   * 只有1、3个月的数据的店铺的经营月份按照默认值defaultStoreAge计算
    */
+  //已改
   def monthsNumFromEarliestOrder = {
     BaseDao.getOrderProps(SQL().select("store_id,order_date").where("order_date != 'null'"))
       .map(a => (a(0).toString, a(1).toString))
       .groupByKey()
-      .map(t => (t._1, BizUtils.monthsNumFrom(t._2.min, "yyyy-MM-dd"))).persist()
+      .map(t => (t._1, BizUtils.monthsNumFrom(t._2.min, "yyyy-MM-dd")))
+      .leftOuterJoin(storeIdCalcMonthsRDD) //(e160d0221914444f9d8639c8234207cc,(26,Some(12)))
+      .map(t => (t._1, if (t._2._2.getOrElse(1) == 12) t._2._1 else defaultStoreAge)).persist() //只有1、3个月的数据的店铺的经营月份按照默认值defaultStoreAge计算
   }
 
-  /**
-   * 订货额年均值 = 近12个月（不含贷款当前月）“金额”字段，金额之和/12
-   * 返回的元素,如：(33010120120716288A,68260)
-   */
-  def moneyAmountAnnAvg = lastMonthsAvg("store_id,money_amount", 12).persist()
-
-  /**
-   * 订货条数年均值 = 近12个月（不含贷款当前月）“订货量”字段，订货量之和/12、
-   * 返回的元素,如：(33010120120716288A,427)
-   */
-  def orderAmountAnnAvg = lastMonthsAvg("store_id,order_amount", 12).persist()
-
-  /**
-   * 计算年均值。订货额年均值和订货条数年均值的计算过程基本相同，除了第二个字段不同，所以提取出计算逻辑。
-   */
-  private def lastMonthsAvg(fields: String, backMonthsNum: Int) = {
-    lastMonthsSum(fields, backMonthsNum)
-      .map(t => (t._1, t._2 / backMonthsNum))
-  }
-
-  /**
-   * 计算年总额。
-   * 计算近12月总提货额(传入"store_id,money_amount")
-   * 计算近12月总进货条数(传入"store_id,order_amount")
-   */
-  private def lastMonthsSum(fields: String, backMonthsNum: Int) = {
-    selectLastMonthsData(fields, backMonthsNum)
+  //已改
+  val avgFor = (property: String) => {
+    BaseDao.getOrderProps(
+      SQL().select(s"store_id,$property,order_date").
+        where(s" order_date >= '${DateUtils.monthsAgo(maxCalcMonths, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'")
+    ).filter(a => filterData(a(0).toString, a(2).toString))
       .map(a => (a(0).toString, a(1).toString.toDouble))
       .groupByKey()
-      .map(t => (t._1, t._2.sum.toInt)).cache()
+      .map(t => (t._1, t._2.sum.toInt))
+      .leftOuterJoin(storeIdCalcMonthsRDD) //(af46ef365bac42f88c5f5ecb46e555a5,(519,Some(1)))
+      .map(t => (t._1, t._2._1 / t._2._2.getOrElse(1)))
   }
+
+  /**
+   * 订货额（年）均值 = 近n个月（不含贷款当前月）“金额”字段，金额之和/n
+   * 返回的元素,如：(33010120120716288A,68260)
+   */
+  //已改
+  val moneyAmountAnnAvg = avgFor("money_amount")
+
+  /**
+   * 订货条数(年)均值 = 近n个月（不含贷款当前月）“订货量”字段，订货量之和/n、
+   * 返回的元素,如：(33010120120716288A,427)
+   */
+  //已改
+  val orderAmountAnnAvg = avgFor("order_amount")
+
+  /**
+   * 月销售增长比(12个月数据版本) = 近3月平均销售/近6月平均销售
+   * 月销售增长比(3个月数据版本) = 近1月销售/近3月平均销售额
+   * 月销售增长比(1个月数据版本) 不进行计算
+   * 返回的数据保留两位小数
+   */
+  //已改
+  def monthlySalesGrowthRatio = {
+    val monthsToCalcForFZ = (monthsNum: Int) => if (monthsNum == 12) 3 else if (monthsNum == 3) 1 else 1
+    val monthsToCalcForFM = (monthsNum: Int) => if (monthsNum == 12) 6 else if (monthsNum == 3) 3 else 1
+
+    val filterData = (storeId: String, orderDate: String, monthsNum: (Int, Int)) =>
+      if (storeIdCalcMonthsMap.get(storeId).getOrElse(1) == 12)
+        orderDate >= DateUtils.monthsAgo(monthsNum._1, "yyyy-MM-01")
+      else if (storeIdCalcMonthsMap.get(storeId).getOrElse(1) == 3)
+        orderDate >= DateUtils.monthsAgo(monthsNum._2, "yyyy-MM-01")
+      else
+        false
+
+    val filterDataForMonthlySalesGrowthRatioFZ = (storeId: String, orderDate: String) => filterData(storeId, orderDate, (3, 1))
+    val filterDataForMonthlySalesGrowthRatioFM = (storeId: String, orderDate: String) => filterData(storeId, orderDate, (6, 3))
+
+    val computeRDD = (maxMonthsNum: Int, filterDataFun: (String,String) => Boolean, monthsToCalcFun: Int => Int) => {
+      BaseDao.getOrderProps(
+        SQL().select("store_id,money_amount,order_date").
+          where(s" order_date >= '${DateUtils.monthsAgo(maxMonthsNum, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'")
+      ).filter(a => filterDataFun(a(0).toString, a(2).toString))
+        .map(a => (a(0).toString, a(1).toString.toDouble))
+        .groupByKey()
+        .map(t => (t._1, t._2.sum.toInt))
+        .leftOuterJoin(storeIdCalcMonthsRDD) //(af46ef365bac42f88c5f5ecb46e555a5,(519,Some(1)))
+        .map(t => (t._1, t._2._1 / monthsToCalcFun(t._2._2.getOrElse(1))))
+    }
+
+    val fzRDD = computeRDD(3,filterDataForMonthlySalesGrowthRatioFZ, monthsToCalcForFZ)
+    val fmRDD = computeRDD(6,filterDataForMonthlySalesGrowthRatioFM, monthsToCalcForFM)
+
+    fzRDD.leftOuterJoin(fmRDD).map(t => (t._1, Utils.retainDecimal(t._2._1.toDouble / t._2._2.get)))
+  }
+
+  /**
+   * 每条均价(年)均值(12个月数据版本) = 近12月总提货额 / 近12月总进货条数 = (近12月总提货额/12) / (近12月总进货条数/12)
+   * 每条均价(年)均值(3个月数据版本) = 近3月总提货额 / 近3月总进货条数
+   * 每条均价(年)均值(1个月数据版本) = 近1月总提货额 / 近1月总进货条数
+   */
+  //已改
+  def perCigarAvgPriceOfAnnAvg = {
+    moneyAmountAnnAvg.leftOuterJoin(orderAmountAnnAvg).filter(t => t._2._2.isDefined && t._2._2.get.toDouble > 0)
+      .map(t => (t._1, t._2._1 / t._2._2.get))
+  }
+
+  /**
+   * 近n个月，每个月的订货额(n=1,3,12)
+   */
+  def moneyAmountPerMonth = {
+    import Helper.storeIdAndOrderDateOrdering
+
+    BaseDao.getOrderProps(
+      SQL().select("store_id,money_amount,order_date").
+        where(s" order_date >= '${DateUtils.monthsAgo(maxCalcMonths, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'")
+    ).filter(a => filterData(a(0).toString, a(2).toString))
+      .map(a => ((a(0).toString, DateUtils.strToStr(a(2).toString, "yyyy-MM-dd", "yyyyMM")), a(1).toString.toDouble))
+      .groupByKey()
+      .map(t => (t._1, Utils.retainDecimal(t._2.sum, 2))).sortBy(_._1).cache()
+  }
+
+  /**
+   * 近12个月，每个月的订货条数
+   */
+  def orderAmountPerMonthNew = {
+    import Helper.storeIdAndOrderDateOrdering
+    selectLastMonthsData(s"store_id,order_date,order_amount", 12)
+      .map(a => ((a(0).toString, DateUtils.strToStr(a(1).toString, "yyyy-MM-dd", "yyyyMM")), a(2).toString.toInt))
+      .groupByKey()
+      .map(t => (t._1, t._2.sum)).sortBy(_._1).cache()
+  }
+
+  def orderAmountPerMonth = {
+    import Helper.storeIdAndOrderDateOrdering
+    selectLastMonthsData(s"store_id,order_date,order_amount", 12)
+      .map(a => ((a(0).toString, DateUtils.strToStr(a(1).toString, "yyyy-MM-dd", "yyyyMM")), a(2).toString.toInt))
+      .groupByKey()
+      .map(t => (t._1, t._2.sum)).sortBy(_._1).cache()
+  }
+
 
   private def selectLastMonthsData(fields: String, backMonthsNum: Int) = {
     BaseDao.getOrderProps(
       SQL().select(fields).
         where(s" order_date >= '${DateUtils.monthsAgo(backMonthsNum, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'")
     )
-  }
-
-  /**
-   * 每条均价年均值 = 近12月总提货额 / 近12月总进货条数
-   */
-  def perCigarAvgPriceOfAnnAvg = {
-    lastMonthsSum("store_id,money_amount", 12)
-      .leftOuterJoin(lastMonthsSum("store_id,order_amount", 12))
-      .filter(t => t._2._2.isDefined && t._2._2.get.toDouble > 0)
-      .map(t => (t._1, t._2._1 / t._2._2.get)).persist()
   }
 
   /**
@@ -102,29 +194,6 @@ object BizDao {
       .map(a => ((a(0).toString, DateUtils.strToStr(a(1).toString, "yyyy-MM-dd", "yyyyMM"), a(2).toString), a(3).toString.toInt))
       .groupByKey()
       .map(t => (t._1, t._2.sum)).cache()
-  }
-
-  /**
-   * 近12个月，每个月的订货额
-   */
-  def moneyAmountPerMonth = {
-    import Helper.storeIdAndOrderDateOrdering
-    selectLastMonthsData(s"store_id,order_date,money_amount", 12)
-      .map(a => ((a(0).toString, DateUtils.strToStr(a(1).toString, "yyyy-MM-dd", "yyyyMM")), a(2).toString.toDouble))
-      .groupByKey()
-      .map(t => (t._1, Utils.retainDecimal(t._2.sum, 2))).sortBy(_._1).cache()
-  }
-
-
-  /**
-   * 近12个月，每个月的订货条数
-   */
-  def orderAmountPerMonth = {
-    import Helper.storeIdAndOrderDateOrdering
-    selectLastMonthsData(s"store_id,order_date,order_amount", 12)
-      .map(a => ((a(0).toString, DateUtils.strToStr(a(1).toString, "yyyy-MM-dd", "yyyyMM")), a(2).toString.toInt))
-      .groupByKey()
-      .map(t => (t._1, t._2.sum)).sortBy(_._1).cache()
   }
 
   /**
@@ -205,7 +274,7 @@ object BizDao {
   def grossMarginPerMonthCategory = {
     val array = BaseDao.getOrderProps(SQL().select("store_id,order_date,money_amount,order_amount,retail_price,cigar_name").where("retail_price <> 'null'"))
       //零售指导价和成本价为0时,不参与计算,所以使用filter过滤掉
-      .filter(a => a(2).toString != "0" && a(4).toString != "0" )
+      .filter(a => a(2).toString != "0" && a(4).toString != "0")
       .map(a => ((a(0).toString, a(1).toString.substring(0, 7), a(5).toString), (a(2).toString.toDouble, a(3).toString.toInt * a(4).toString.toDouble)))
       .groupByKey()
       .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
@@ -226,7 +295,7 @@ object BizDao {
   def grossMarginPerMonthAll = {
     val array = BaseDao.getOrderProps(SQL().select("store_id,order_date,money_amount,order_amount,retail_price").where("retail_price <> 'null'"))
       //零售指导价和成本价为0时,不参与计算,所以使用filter过滤掉
-      .filter(a => a(2).toString != "0" && a(4).toString != "0" )
+      .filter(a => a(2).toString != "0" && a(4).toString != "0")
       .map(a => ((a(0).toString, a(1).toString.substring(0, 7)), (a(2).toString.toDouble, a(3).toString.toInt * a(4).toString.toDouble)))
       .groupByKey()
       .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
@@ -246,31 +315,11 @@ object BizDao {
         .where(s" retail_price <> 'null' and order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'")
     )
       //零售指导价和成本价为0时,不参与计算,所以使用filter过滤掉
-      .filter(a => a(1).toString != "0" && a(3).toString != "0" )
+      .filter(a => a(1).toString != "0" && a(3).toString != "0")
       .map(a => (a(0), (a(1).toString.toDouble, a(2).toString.toInt * a(3).toString.toDouble)))
       .groupByKey()
       .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
       .map(t => (t._1.toString, Utils.retainDecimal(1 - t._2._1 / t._2._2, 3))).persist()
-  }
-
-  /**
-   * 月销售增长比 = 近3月月平均销售 / 近6月月平均销售 (不足六个月怎么算？)
-   * 返回的数据保留两位小数
-   */
-  def monthlySalesGrowthRatio = {
-    lastMonthsAvg("store_id,money_amount", 3)
-      .leftOuterJoin(lastMonthsActualAvg(6)) //(33010102981025009A,(130263,Some(125425)))
-      .map(t => (t._1, Utils.retainDecimal(t._2._1.toDouble / t._2._2.get))).persist()
-  }
-
-  /**
-   * 如果实际月数小于monthsNum，那么取实际的那个月份数
-   */
-  private def lastMonthsActualAvg(monthsNum: Int) = {
-    lastMonthsSum("store_id,money_amount", monthsNum)
-      .leftOuterJoin(monthsNumFromEarliestOrder)
-      .map(t => (t._1, t._2._1, Math.min(t._2._2.getOrElse(0), monthsNum)))
-      .map(t => (t._1, t._2 / t._3))
   }
 
   /**
