@@ -75,7 +75,6 @@ object FieldsCalculationService {
     )
   }
 
-
   /**
    * 向MQ发送月订货条数
    */
@@ -138,7 +137,7 @@ object FieldsCalculationService {
 
   private def sendActiveCategory() = {
     val strMsgsOfAllStores = new StringBuffer()
-    BizDao.getNewActiveCategoryInLast12Months(1, 12).groupBy(_._1).foreach {
+    BizDao.getActiveCategory.groupBy(_._1).foreach {
       eachStore =>
         val msgs = for (elem <- eachStore._2.toList) yield Msg("M_ACTIVE_CATEGORY", elem._3, "2", elem._2)
         MQAgent.send(MsgWrapper.getJson("活跃品类", msgs, eachStore._1))

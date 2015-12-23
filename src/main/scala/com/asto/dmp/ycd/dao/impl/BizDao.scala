@@ -12,6 +12,8 @@ object BizDao {
 
   val storeIdCalcMonthsRDD = BaseDao.getStoreIdCalcMonthsProps().map(a => (a(0).toString, a(1).toString().toInt)).groupByKey().map(t => (t._1, t._2.min)).persist()
 
+  val storeIdArray = BaseDao.getStoreIdCalcMonthsProps(SQL().select("store_id")).map(a => a(0).toString).distinct().collect()
+
   val storeIdCalcMonthsArray = storeIdCalcMonthsRDD.collect()
 
   val storeIdCalcMonthsMap = storeIdCalcMonthsArray.toMap
@@ -37,7 +39,7 @@ object BizDao {
       .map(t => (t._1, if (t._2._2.getOrElse(1) == 12) t._2._1 else defaultStoreAge)).persist() //只有1、3个月的数据的店铺的经营月份按照默认值defaultStoreAge计算
   }
 
-  private def filterOnePropertyDataInOrder(property: String, maxMonthsNum: Int = maxCalcMonths, filterDataFun: (String, String) => Boolean = filterData) = {
+  def filterOnePropertyDataInOrder(property: String, maxMonthsNum: Int = maxCalcMonths, filterDataFun: (String, String) => Boolean = filterData) = {
     BaseDao.getOrderProps(
       SQL().select(s"store_id,$property,order_date").
         where(s" order_date >= '${DateUtils.monthsAgo(maxMonthsNum, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'")
@@ -224,8 +226,8 @@ object BizDao {
   /**
    * 品类集中度：近n月销售额最高的前10名的销售额占总销售额的比重，TOP10商品的销售额之和/总销售额（近12月）
    */
-  //已改
-  def categoryConcentrationNew = {
+  //已改,未测
+  def categoryConcentration = {
 
     Contexts.sparkContext
       .parallelize(getTop10Category)
@@ -269,7 +271,7 @@ object BizDao {
   private def getLastMonthsSales = {
     BaseDao.getOrderProps(
       SQL().select("store_id,order_amount,retail_price,order_date").
-        where(s"retail_price <> 'null' and order_date >= '${DateUtils.monthsAgo(maxCalcMonths , "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'")
+        where(s"retail_price <> 'null' and order_date >= '${DateUtils.monthsAgo(maxCalcMonths, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'")
     ).filter(a => filterData(a(0).toString, a(3).toString))
       .map(a => (a(0).toString, a(1).toString.toInt * a(2).toString.toDouble))
       .map(t => (t._1, t._2))
@@ -285,7 +287,7 @@ object BizDao {
     Contexts.sparkContext.parallelize(storeIdArray).map((_, 0.6)).persist()
   }
 
-  def storeIdArray = BaseDao.getOrderProps(SQL().select("store_id").where(s"order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}'")).map(a => a(0).toString).distinct().collect()
+  // def storeIdArray = BaseDao.getOrderProps(SQL().select("store_id").where(s"order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}'")).map(a => a(0).toString).distinct().collect()
 
   /**
    * 线下商圈指数
@@ -341,38 +343,59 @@ object BizDao {
 
   /**
    * 活跃品类数
-   * 当月月均活跃品类，为前三个月月均的订货量≥3的品类之和，如2015.10显示的活跃品类为，2015.8-2015.10三个月订货量≥9的，品类数之和；
+   * 当月月均活跃品类(12个月数据版本) = 近三个月月均的订货量≥3的品类之和 （即近三个月的订货量之和≥9的品类之和 ）
+   * 如2015.11显示的活跃品类为，2015.8-2015.10三个月订货量≥9的，品类数之和；
    * 计算12个月的活跃评类数。如果不能提取到14个月的数据，则最初两个月的数据为空，均值按近十个月计算；
+   *
+   * 当月月均活跃品类(1个月、3个月数据版本) = 近一个月的订货量≥3的品类之和
+   * 如2015.11显示的活跃品类为，2015.10一个月订货量≥3的品类数之和；
+   *
    * 返回：店铺id，日期，活跃品类数
    * 注意：该方法的效率比较低，如果对系统执行时间有影响，可以对该方法进行优化。
    */
-  def getNewActiveCategoryInLast12Months(timeRanges: (Int, Int)) = {
-    val storeIds = storeIdArray
+  //改好
+  def getActiveCategory = {
+    val monthRange = (m: Int, calcMonths: Int) =>
+      if(calcMonths == 12)
+        (DateUtils.monthsAgo(m + 1, "yyyyMM"), DateUtils.monthsAgo(m + 3, "yyyyMM"))
+      else
+        (DateUtils.monthsAgo(m + 1, "yyyyMM"), DateUtils.monthsAgo(m + 1, "yyyyMM"))
+
     val allArray = allData.collect()
     val result = scala.collection.mutable.ListBuffer[(String, String, Int)]()
-    storeIds.foreach {
-      storeId =>
-        (timeRanges._1 to timeRanges._2).foreach {
+    storeIdCalcMonthsArray.foreach {
+      storeIdCalcMonths =>
+        (0 until storeIdCalcMonths._2).foreach {
           months =>
             val thisMonths = DateUtils.monthsAgo(months, "yyyyMM")
-            val range = monthRange(months)
-            val num = allArray.filter(t => t._1._1 == storeId && range._1 >= t._1._2 && t._1._2 >= range._2)
+            val range = monthRange(months, storeIdCalcMonths._2)
+            val num = allArray.filter(t => t._1._1 == storeIdCalcMonths._1 && range._1 >= t._1._2 && t._1._2 >= range._2)
               .map(t => (t._1._3, t._2))
               .groupBy(_._1)
               .map(t => (t._1, (for (e <- t._2.toList) yield e._2).sum))
-              .filter(_._2 >= 9).toList.size
-            result += Tuple3(storeId, thisMonths, num)
+              .filter(_._2 >= getAmountLimitForActiveCategory(storeIdCalcMonths._2)).toList.size
+            result += Tuple3(storeIdCalcMonths._1, thisMonths, num)
         }
     }
     result
   }
 
-  private def monthRange(m: Int) = {
-    (DateUtils.monthsAgo(m + 1, "yyyyMM"), DateUtils.monthsAgo(m + 3, "yyyyMM"))
-  }
+  /**
+   * 当月月均活跃品类(12个月数据版本) = 近三个月的订货量之和≥9的品类之和
+   * 当月月均活跃品类(1个月、3个月数据版本) = 近一个月的订货量≥3的品类之和
+   * 如果是12个月的数据，过滤出订货量>=9的数据，如果是其他(1个月或者3个月)的数据，过滤出>=3的数据
+   */
+  val getAmountLimitForActiveCategory = (calcMonths: Int) => if (calcMonths == 12) 9 else 3
 
-  private def allData = {
-    BaseDao.getOrderProps(SQL().select("store_id,order_date,cigar_name,order_amount").where(s" order_date >= '${DateUtils.monthsAgo(15, "yyyy-MM-01")}' "))
+  def allData = {
+    val filterData = (storeId: String, orderDate: String) => {
+      if(storeIdCalcMonthsMap.get(storeId).getOrElse(1) == 12)
+        orderDate >= DateUtils.monthsAgo(15, "yyyy-MM-01")
+      else
+        orderDate >= DateUtils.monthsAgo(storeIdCalcMonthsMap.get(storeId).getOrElse(1), "yyyy-MM-01")
+    }
+    BaseDao.getOrderProps(SQL().select("store_id,order_date,cigar_name,order_amount").where(s" order_date >= '${DateUtils.monthsAgo(15, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}' "))
+      .filter(a => filterData(a(0).toString, a(1).toString))
       .map(a => ((a(0).toString, DateUtils.strToStr(a(1).toString, "yyyy-MM-dd", "yyyyMM"), a(2).toString), a(3).toString.toInt))
       .groupByKey()
       .map(t => (t._1, t._2.sum)).cache()
@@ -382,16 +405,24 @@ object BizDao {
    * 获取当月活跃品类数
    */
   def getActiveCategoryInLastMonth = {
+    val filterData = (storeId: String, orderDate: String) => {
+      if(storeIdCalcMonthsMap.get(storeId).getOrElse(1) == 12)
+        orderDate >= DateUtils.monthsAgo(3, "yyyy-MM-01")
+      else
+        orderDate >= DateUtils.monthsAgo(1, "yyyy-MM-01")
+    }
     BaseDao.getOrderProps(SQL().select("store_id,cigar_name,order_date,order_amount").where(s" order_date >= '${DateUtils.monthsAgo(3, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'"))
+      .filter(a => filterData(a(0).toString, a(2).toString))
       .map(a => ((a(0).toString, a(1).toString), a(3).toString.toInt))
       .groupByKey()
-      .map(t => (t._1, t._2.sum))
-      .filter(t => t._2 >= 9)
+      .map(t => (t._1._1, (t._1._2, t._2.sum)))
+      .leftOuterJoin(storeIdCalcMonthsRDD)
+      .map(t => ((t._1, t._2._1._1), t._2._1._2, getAmountLimitForActiveCategory(t._2._2.getOrElse(1))))
+      .filter(t => t._2 >= t._3)
       .map(t => (t._1._1, 1))
       .groupByKey()
       .map(t => (t._1, t._2.sum)).persist()
   }
-
 
   /*
    /**

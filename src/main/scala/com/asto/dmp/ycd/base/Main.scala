@@ -1,6 +1,5 @@
 package com.asto.dmp.ycd.base
 
-import com.asto.dmp.ycd.dao.impl.{BizDao, BaseDao}
 import com.asto.dmp.ycd.mq.MQAgent
 import com.asto.dmp.ycd.service.impl.{LoanWarnService, FieldsCalculationService, CreditService, ScoreService}
 import com.asto.dmp.ycd.util.{DateUtils, Utils}
@@ -31,12 +30,9 @@ object Main extends Logging {
       case "200" =>
         Constants.App.IS_ONLINE = false
         logInfo(Utils.logWrapper("运行[离线模型-计算所有店铺]"))
-
-        BizDao.moneyAmountPerMonth.foreach(println)
-        BizDao.moneyAmountPerMonthNew.foreach(println)
-     /*   new FieldsCalculationService().run()
-        new ScoreService().run()*/
-        //授信额度这里不需要计算
+        new FieldsCalculationService().run()
+        new ScoreService().run()
+      //授信额度这里不需要计算
       case "201" =>
         Constants.App.IS_ONLINE = false
         logInfo(Utils.logWrapper(s"运行[离线模型-计算贷后预警]"))
