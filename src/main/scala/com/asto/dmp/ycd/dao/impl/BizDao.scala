@@ -423,46 +423,6 @@ object BizDao {
       .groupByKey()
       .map(t => (t._1, t._2.sum)).persist()
   }
-
-  /*
-   /**
-    * 单品毛利率 = （零售指导价-成本价）/指导价*100%
-    * 按月计算
-    * 返回：店铺id，年月，卷烟牌子，毛利率
-    * 注意：该方法没有用到
-    */
-    def grossMarginPerMonthCategory = {
-     val array = BaseDao.getOrderProps(SQL().select("store_id,order_date,money_amount,order_amount,retail_price,cigar_name").where("retail_price <> 'null'"))
-       //零售指导价和成本价为0时,不参与计算,所以使用filter过滤掉
-       .filter(a => a(2).toString != "0" && a(4).toString != "0")
-       .map(a => ((a(0).toString, a(1).toString.substring(0, 7), a(5).toString), (a(2).toString.toDouble, a(3).toString.toInt * a(4).toString.toDouble)))
-       .groupByKey()
-       .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
-       .filter(t => t._2._1.toInt > 0 && t._2._2.toInt > 0)
-       .map(t => ((t._1._1, t._1._2, Utils.retainDecimal(1 - t._2._1 / t._2._2, 3)), t._1._3))
-       .collect()
-       .sortWith((a, b) => a._1.toString() > b._1.toString())
-       .map(t => (t._1._1, t._1._2, t._2, t._1._3))
-     Contexts.sparkContext.parallelize(array)
-   }
- */
-  /*/**
-   * 客户各品类毛利率
-   * 毛利率=毛利/销售金额=（销售金额-成本(进货额））/销售金额=1-成本（money_amount）/销售金额（order_amount*retail_price）
-   * 按月计算
-   * 返回：店铺id，日期，每月毛利率
-   */
-  def grossMarginPerMonthAll = {
-    val array = BaseDao.getOrderProps(SQL().select("store_id,order_date,money_amount,order_amount,retail_price").where("retail_price <> 'null'"))
-      //零售指导价和成本价为0时,不参与计算,所以使用filter过滤掉
-      .filter(a => a(2).toString != "0" && a(4).toString != "0")
-      .map(a => ((a(0).toString, a(1).toString.substring(0, 7)), (a(2).toString.toDouble, a(3).toString.toInt * a(4).toString.toDouble)))
-      .groupByKey()
-      .map(t => (t._1, t._2.reduce((a, b) => (a._1 + b._1, a._2 + b._2))))
-      .map(t => (t._1._1, t._1._2, Utils.retainDecimal(1 - t._2._1 / t._2._2, 3))) //((33010220120807247A,2015-01),0.18)
-      .collect().sortWith((a, b) => a.toString() > b.toString())
-    Contexts.sparkContext.parallelize(array)
-  }*/
 }
 
 object Helper {
