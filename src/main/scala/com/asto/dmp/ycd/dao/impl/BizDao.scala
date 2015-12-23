@@ -280,14 +280,33 @@ object BizDao {
   }
 
   /**
-   * 销售额租金比
+   * 销售额租金比(12个月) = 近12月销售额/ 年租金
+   * 销售额租金比(1个月) = 1月提货额/租赁合同月均额
+   * 销售额租金比(3个月)  =  近3月月均提货额/租赁合同月均额
    * 暂时缺失数据，默认为0.6
    */
   def salesRentRatio = {
-    Contexts.sparkContext.parallelize(storeIdArray).map((_, 0.6)).persist()
-  }
+    if(BaseDao.getShopYearRentProps(SQL().select("store_id,rent_value")).count == 0){
+      Contexts.sparkContext.parallelize(storeIdArray).map((_, 0.6)).persist()
+    } else {
+      //月均销售额
+      val avgMoneyAmount = BaseDao.getOrderProps(
+        SQL().select(s"store_id,money_amount,order_date").
+          where(s" order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}' and order_date < '${DateUtils.monthsAgo(0, "yyyy-MM-01")}'")
+      ).filter(a => filterData(a(0).toString, a(2).toString))
+        .map(a => (a(0).toString, a(1).toString.toDouble))
+        .groupByKey()
+        .map(t => (t._1, t._2.sum.toInt))
+        .leftOuterJoin(storeIdCalcMonthsRDD) //(af46ef365bac42f88c5f5ecb46e555a5,(519,Some(1)))
+        .map(t => (t._1, t._2._1 / t._2._2.getOrElse(1)))
 
-  // def storeIdArray = BaseDao.getOrderProps(SQL().select("store_id").where(s"order_date >= '${DateUtils.monthsAgo(12, "yyyy-MM-01")}'")).map(a => a(0).toString).distinct().collect()
+      val storeIdRentValueRDD = BaseDao.getShopYearRentProps(SQL().select("store_id,rent_value")).map(a => (a(0).toString,a(1).toString))
+      storeIdCalcMonthsRDD.leftOuterJoin(storeIdRentValueRDD)
+        .map(t => (t._1, t._2._2.getOrElse(-12).toString.toDouble/12)) //除以12表示月租，负数表示没有月租
+        .leftOuterJoin(avgMoneyAmount)
+        .map(t => (t._1, if(t._2._1 < 0 || t._2._2.isEmpty) 0.6 else t._2._2.get / t._2._1))
+    }
+  }
 
   /**
    * 线下商圈指数

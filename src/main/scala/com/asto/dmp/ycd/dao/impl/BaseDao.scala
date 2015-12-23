@@ -39,4 +39,7 @@ object BaseDao extends Dao {
   def getLoanStoreProps(sql: SQL = new SQL()) = getProps(Constants.InputPath.LOAN_STORE, Constants.Schema.LOAN_STORE, "loan_store", sql)
 
   def getStoreIdCalcMonthsProps(sql: SQL = new SQL()) = getProps(Constants.InputPath.STORE_ID_CALC_MONTHS, Constants.Schema.STORE_ID_CALC_MONTHS, "store_id_calc_months", sql)
+
+  def getShopYearRentProps(sql: SQL = new SQL()) = getProps(Constants.InputPath.SHOP_YEAR_RENT, Constants.Schema.SHOP_YEAR_RENT, "shop_year_rent", sql)
+
 }

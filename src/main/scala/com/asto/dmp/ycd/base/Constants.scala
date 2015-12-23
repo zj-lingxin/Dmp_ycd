@@ -41,6 +41,9 @@ object Constants {
     val LOAN_STORE = dirAndFileName("loan_store")
 
     val STORE_ID_CALC_MONTHS = dirAndFileName("store_id_calc_months")
+
+    val SHOP_YEAR_RENT = dirAndFileName("shop_year_rent")
+
   }
   
 
@@ -77,5 +80,7 @@ object Constants {
     val INVALID_ORDER_ID = "invalid_order_id"
     //每个店铺需要计算几个月份的数据。
     val STORE_ID_CALC_MONTHS = "store_id,calc_months"
+    //年租金额
+    val SHOP_YEAR_RENT = "store_id,rent_value"
   }
 }
