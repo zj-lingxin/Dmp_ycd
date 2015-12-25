@@ -170,7 +170,7 @@ object ScoreService extends Logging {
    */
   def getAllGPA = {
     getScaleGPA.leftOuterJoin(getProfitGPA) //(33010120120716288A,((0.56734,0.49166666666666664),Some((0.0,0.5999999999999996))))
-      .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._2.getOrElse((0.06,0.0))._1, t._2._2.getOrElse((0.06,0.0))._2))) //(33010120120716288A,(0.56734,0.49166666666666664,0.0,0.5999999999999996))
+      .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._2.getOrElse((0.06, 0.0))._1, t._2._2.getOrElse((0.06, 0.0))._2))) //(33010120120716288A,(0.56734,0.49166666666666664,0.0,0.5999999999999996))
       .leftOuterJoin(getGrowingUpGPA)
       .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._2.getOrElse(0.0)))) //(33010120120716288A,(0.56734,0.49166666666666664,0.0,0.5999999999999996,0.76))
       .leftOuterJoin(getOperationGPA)
@@ -178,17 +178,37 @@ object ScoreService extends Logging {
       .leftOuterJoin(getMarketGPA)
       .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._1._5, t._2._1._6, t._2._1._7, t._2._1._8, t._2._1._9, t._2._2.getOrElse(0.8)))).persist() //(33010120120716288A,(0.56734,0.49166666666666664,0.0,0.5999999999999996,0.76,0.9766666666666667,1.0,0.5,0.43333333333333335,0.8))
   }
- /* /**
-   * getAllGPA这个RDD调整后的格式，用于输出到文件的格式
-   * 输出：店铺id，订货额年均值绩点，每条均价年均值绩点，	销售额租金比绩点，1年毛利率绩点，月销售增长比绩点，订货条数年均值绩点，	经营期限绩点，活跃品类绩点，品类集中度绩点，线下商圈指数
-   */
-  def getResultGPA = getAllGPA.map(t => (t._1, t._2._1, t._2._2, t._2._3, t._2._4, t._2._5, t._2._6, t._2._7, t._2._8, t._2._9, t._2._10))
-*/
+
+  /* /**
+    * getAllGPA这个RDD调整后的格式，用于输出到文件的格式
+    * 输出：店铺id，订货额年均值绩点，每条均价年均值绩点，	销售额租金比绩点，1年毛利率绩点，月销售增长比绩点，订货条数年均值绩点，	经营期限绩点，活跃品类绩点，品类集中度绩点，线下商圈指数
+    */
+   def getResultGPA = getAllGPA.map(t => (t._1, t._2._1, t._2._2, t._2._3, t._2._4, t._2._5, t._2._6, t._2._7, t._2._8, t._2._9, t._2._10))
+ */
   /**
-   * 输出：店铺id，规模得分	，盈利得分，成长得分，运营得分	，市场得分，总得分
+   * 输出：店铺id，规模得分，盈利得分，成长得分，运营得分，市场得分，总得分
+   * 我们烟草贷这块，因为招行降低标准后，原评分标准不适应（原准入5万，低于5万评分极低），因此需要修改标准
+   * 具体如下
+   * 银行开始接受5万以下客户，但是要求至少570分以上的需求
+   * 请对月均5万以下的修该规则如下
+   * 授信评分新=原授信评分+50
+   * 例：原月均3万客户，评分530分，重新调整后为580分
    */
   def getAllScore = {
-    getAllGPA.map(t => (t._1, getScaleScore(t._2._1, t._2._2), getProfitScore(t._2._3, t._2._4.toString.toDouble), getGrowingUpScore(t._2._5), getOperationScore(t._2._6, t._2._7, t._2._8, t._2._9), getMarketScore(t._2._10), getTotalScore(t._2))).cache()
+    val moneyAmountAvgMap = BizDao.moneyAmountAnnAvg.collect().toMap
+    //6a273b7ef23347539a9fe633b3a5cfe8
+    getAllGPA.map { t =>
+      (
+        t._1,
+        getScaleScore(t._2._1, t._2._2),
+        getProfitScore(t._2._3, t._2._4.toString.toDouble),
+        getGrowingUpScore(t._2._5),
+        getOperationScore(t._2._6, t._2._7, t._2._8, t._2._9),
+        getMarketScore(t._2._10),
+        if (moneyAmountAvgMap.get(t._1).getOrElse(0) <= 50000) getTotalScore(t._2) + 50 else getTotalScore(t._2)
+      )
+    }.cache()
+
   }
 
   private def rangeOfGPA(GPA: Double) = {
