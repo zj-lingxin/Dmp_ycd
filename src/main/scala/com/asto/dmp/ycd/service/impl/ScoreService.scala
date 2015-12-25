@@ -13,7 +13,7 @@ object ScoreService extends Logging {
   /** 权重 **/
   object Weight {
     //规模	权重:30%	 订货额年均值	近1年月均（提货额）	0≤(X-50000)/100000≤1
-    val payMoneyAnnAvg = 0.3
+    val payMoneyAnnAvg = 0.2
 
     //规模	权重:5% 订货条数年均值 平均每月订货量（条）
     val orderAmountAnnAvg = 0.05
@@ -25,13 +25,13 @@ object ScoreService extends Logging {
     val grossMarginLastYear = 0.1
 
     //成长	权重:20%	月销售增长比	近3月平均销售/近6月平均销售
-    val monthlySalesGrowthRatio = 0.2
+    val monthlySalesGrowthRatio = 0.25
 
     //运营 权重:5%	每条均价年均值	客单价（每条进货均价）0≤(X-120)/120≤1
     val perCigarAvgPriceOfAnnAvg = 0.05
 
     //运营	权重:5%	经营期限（月）申报月起经营月份数 减 最早一笔网上订单的月份
-    val monthsNumsFromEarliestOrder = 0.05
+    val monthsNumsFromEarliestOrder = 0.1
 
     //运营	权重:5%	活跃品类最近一个月的值才参与模型计算	月均活跃品类 减 基准值20种
     val activeCategoryInLastMonth = 0.05
@@ -73,7 +73,7 @@ object ScoreService extends Logging {
     finalScore(Weight.payMoneyAnnAvg * allGPA._1 + Weight.orderAmountAnnAvg * allGPA._2 + Weight.salesRentRatio * allGPA._3 + Weight.grossMarginLastYear * allGPA._4 + Weight.monthlySalesGrowthRatio * allGPA._5 + Weight.perCigarAvgPriceOfAnnAvg * allGPA._6 + Weight.monthsNumsFromEarliestOrder * allGPA._7 + Weight.activeCategoryInLastMonth * allGPA._8 + Weight.categoryConcentration * allGPA._9 + Weight.offlineShoppingDistrictIndex * allGPA._10)
   }
 
-  private def calcPayMoneyAnnAvgGPA(value: Double) = rangeOfGPA((value - 50000) / 100000)
+  private def calcPayMoneyAnnAvgGPA(value: Double) = rangeOfGPA(value / 50000)
 
   private def calcOrderAmountAnnAvgGPA(value: Double) = rangeOfGPA((value - 300) / 300)
 
@@ -179,24 +179,10 @@ object ScoreService extends Logging {
       .map(t => (t._1, (t._2._1._1, t._2._1._2, t._2._1._3, t._2._1._4, t._2._1._5, t._2._1._6, t._2._1._7, t._2._1._8, t._2._1._9, t._2._2.getOrElse(0.8)))).persist() //(33010120120716288A,(0.56734,0.49166666666666664,0.0,0.5999999999999996,0.76,0.9766666666666667,1.0,0.5,0.43333333333333335,0.8))
   }
 
-  /* /**
-    * getAllGPA这个RDD调整后的格式，用于输出到文件的格式
-    * 输出：店铺id，订货额年均值绩点，每条均价年均值绩点，	销售额租金比绩点，1年毛利率绩点，月销售增长比绩点，订货条数年均值绩点，	经营期限绩点，活跃品类绩点，品类集中度绩点，线下商圈指数
-    */
-   def getResultGPA = getAllGPA.map(t => (t._1, t._2._1, t._2._2, t._2._3, t._2._4, t._2._5, t._2._6, t._2._7, t._2._8, t._2._9, t._2._10))
- */
   /**
    * 输出：店铺id，规模得分，盈利得分，成长得分，运营得分，市场得分，总得分
-   * 我们烟草贷这块，因为招行降低标准后，原评分标准不适应（原准入5万，低于5万评分极低），因此需要修改标准
-   * 具体如下
-   * 银行开始接受5万以下客户，但是要求至少570分以上的需求
-   * 请对月均5万以下的修该规则如下
-   * 授信评分新=原授信评分+50
-   * 例：原月均3万客户，评分530分，重新调整后为580分
    */
   def getAllScore = {
-    val moneyAmountAvgMap = BizDao.moneyAmountAnnAvg.collect().toMap
-    //6a273b7ef23347539a9fe633b3a5cfe8
     getAllGPA.map { t =>
       (
         t._1,
@@ -205,7 +191,7 @@ object ScoreService extends Logging {
         getGrowingUpScore(t._2._5),
         getOperationScore(t._2._6, t._2._7, t._2._8, t._2._9),
         getMarketScore(t._2._10),
-        if (moneyAmountAvgMap.get(t._1).getOrElse(0) <= 50000) getTotalScore(t._2) + 50 else getTotalScore(t._2)
+        getTotalScore(t._2)
       )
     }.cache()
 
