@@ -20,6 +20,12 @@ object BaseDao extends Dao {
 
   private def getInvalidOrderId(sql: SQL = new SQL()) = getProps(Constants.InputPath.INVALID_ORDER_ID, Constants.Schema.INVALID_ORDER_ID, "invalid_order_id", sql)
 
+  /**
+   * 最后的相应字段(当价格表不存在时,会影响毛利率和集中度的计算)
+   * store_id,                        order_id,    order_date,cigar_name,    wholesale_price,purchase_amount,order_amount,money_amount,cigar_brand,retail_price,producer_name,area_code
+   * 69c8fff32f7d47c7bbc380c538d7ed0a,131102860971,2013-11-04,黄金叶(软大金圆),178.0,          null,           1,           178.0,       null,       null,        null,         320200)
+   * @return
+   */
   def orderAndPrice () = {
     val tobaccoPriceRDD = getTobaccoPriceProps(SQL().select("cigar_name,cigar_brand,retail_price,producer_name,wholesale_price,area_code"))
       .map(a => ((a(0).toString,a(5).toString), (a(1).toString, a(2).toString, a(3).toString,a(4).toString))).distinct()
